@@ -1,137 +1,119 @@
-#include <rtc_base/logging.h>
-#include <yaml-cpp/yaml.h>
-#include <unistd.h>
 #include "server/signaling_server.h"
+#include <rtc_base/logging.h>
+#include <unistd.h>
+#include <yaml-cpp/yaml.h>
 #include "base/socket.h"
 
-namespace xrtc
-{
+namespace xrtc {
 
-    void signaling_server_recv_notify(EventLoop *el, IOWatcher *w, int fd, int events, void *data)
-    {
-        int msg;
-        if (read(fd, &msg, sizeof(int)) != sizeof(int))
-        {
-            RTC_LOG(LS_WARNING) << "read from pipe error: " << strerror(errno)
-                                << ", errno: " << errno;
-            return;
-        }
+void signaling_server_recv_notify(EventLoop *el, IOWatcher *w, int fd, int events, void *data) {
+  int msg;
+  if (read(fd, &msg, sizeof(int)) != sizeof(int)) {
+    RTC_LOG(LS_WARNING) << "read from pipe error: " << strerror(errno) << ", errno: " << errno;
+    return;
+  }
 
-        SignalingServer *server = (SignalingServer *)data;
-        server->_process_notify(msg);
-    }
+  SignalingServer *server = (SignalingServer *)data;
+  server->_process_notify(msg);
+}
 
-    void accept_new_conn(EventLoop *el, IOWatcher *w, int fd, int events, void *data) {}
+void accept_new_conn(EventLoop *el, IOWatcher *w, int fd, int events, void *data) {}
 
-    SignalingServer::SignalingServer() : _el(new EventLoop(this))
-    {
-    }
-    SignalingServer::~SignalingServer() {}
+SignalingServer::SignalingServer() : _el(new EventLoop(this)) {}
+SignalingServer::~SignalingServer() {}
 
-    int SignalingServer::init(const char *conf_file)
-    {
-        if (!conf_file)
-        {
-            RTC_LOG(LS_WARNING) << "signal server conf file is null";
-            return -1;
-        }
+int SignalingServer::init(const char *conf_file) {
+  if (!conf_file) {
+    RTC_LOG(LS_WARNING) << "signal server conf file is null";
+    return -1;
+  }
 
-        try
-        {
-            YAML::Node config = YAML::LoadFile(conf_file);
-            RTC_LOG(LS_INFO) << "signaling server options: \n"
-                             << config;
+  try {
+    YAML::Node config = YAML::LoadFile(conf_file);
+    RTC_LOG(LS_INFO) << "signaling server options: \n" << config;
 
-            _options.host = config["host"].as<std::string>();
-            _options.port = config["port"].as<int>();
-            _options.worker_num = config["worker_num"].as<int>();
-            _options.connection_timeout = config["connection_timeout"].as<int>();
-        }
-        catch (const YAML::Exception e)
-        {
-            RTC_LOG(LS_ERROR) << "catch a YAML exception, line:" << e.mark.line + 1
-                              << ", column: " << e.mark.column + 1 << ", error: " << e.msg;
-            return -1;
-        }
+    _options.host = config["host"].as<std::string>();
+    _options.port = config["port"].as<int>();
+    _options.worker_num = config["worker_num"].as<int>();
+    _options.connection_timeout = config["connection_timeout"].as<int>();
+  } catch (const YAML::Exception e) {
+    RTC_LOG(LS_ERROR) << "catch a YAML exception, line:" << e.mark.line + 1
+                      << ", column: " << e.mark.column + 1 << ", error: " << e.msg;
+    return -1;
+  }
 
-        // 创建管道，用于线程间通信
-        int fds[2];
-        if (pipe(fds))
-        {
-            RTC_LOG(LS_WARNING) << "create pipe error: " << strerror(errno)
-                                << ", errno: " << errno;
-            return -1;
-        }
+  // 创建管道，用于线程间通信
+  int fds[2];
+  if (pipe(fds)) {
+    RTC_LOG(LS_WARNING) << "create pipe error: " << strerror(errno) << ", errno: " << errno;
+    return -1;
+  }
 
-        _notify_recv_fd = fds[0];
-        _notify_send_fd = fds[1];
-        // 将recv_fd添加到事件循环，进行管理
-        _pipe_watcher = _el->create_io_event(signaling_server_recv_notify, this);
-        _el->start_io_event(_pipe_watcher,_notify_recv_fd,EventLoop::READ);
-        _listen_fd = create_tcp_server(_options.host.c_str(), _options.port);
-        _io_watcher=_el->create_io_event(accept_new_conn,this);
-        _el->start_io_event(_io_watcher,_listen_fd,EventLoop::READ);
-        return 0;
-    }
+  _notify_recv_fd = fds[0];
+  _notify_send_fd = fds[1];
+  // 将recv_fd添加到事件循环，进行管理
+  _pipe_watcher = _el->create_io_event(signaling_server_recv_notify, this);
+  _el->start_io_event(_pipe_watcher, _notify_recv_fd, EventLoop::READ);
 
-    bool SignalingServer::start(){
-        if (_thread)
-        {
-            RTC_LOG(LS_INFO)<<"signal server already start";
-            return false;
-        }
+  // 创建tcp server
+  _listen_fd = create_tcp_server(_options.host.c_str(), _options.port);
+  _io_watcher = _el->create_io_event(accept_new_conn, this);
+  _el->start_io_event(_io_watcher, _listen_fd, EventLoop::READ);
+  return 0;
+}
 
-        _thread =new std::thread([=](){
-            RTC_LOG(LS_INFO)<<"signaling server event loop run";
-            _el->start();
-            RTC_LOG(LS_INFO)<<"signaling server event loop stop";
-        });
-    }
+bool SignalingServer::start() {
+  if (_thread) {
+    RTC_LOG(LS_INFO) << "signal server already start";
+    return false;
+  }
 
-    void SignalingServer::stop(){
-        notify(SignalingServer::QUIT);
-    }
+  _thread = new std::thread([=]() {
+    RTC_LOG(LS_INFO) << "signaling server event loop run";
+    _el->start();
+    RTC_LOG(LS_INFO) << "signaling server event loop stop";
+  });
+}
 
-    int SignalingServer::notify(int msg){
-        int written = write(_notify_send_fd,&msg,sizeof(int));
-        return written==sizeof(int)?0:-1;
-    }
+void SignalingServer::stop() { notify(SignalingServer::QUIT); }
 
-    void SignalingServer::_process_notify(int msg){
-        switch (msg)
-        {
-        case QUIT:
-            _stop();
-            break;
-        default:
-            RTC_LOG(LS_WARNING)<<"unknown msg: "<<msg;
-            break;
-        }
-    }
+int SignalingServer::notify(int msg) {
+  int written = write(_notify_send_fd, &msg, sizeof(int));
+  return written == sizeof(int) ? 0 : -1;
+}
 
-    void SignalingServer::_stop(){
-        if (!_thread)
-        {
-            RTC_LOG(LS_WARNING)<<"signaling server not running";
-            return;
-        }
+void SignalingServer::_process_notify(int msg) {
+  switch (msg) {
+    case QUIT:
+      _stop();
+      break;
+    default:
+      RTC_LOG(LS_WARNING) << "unknown msg: " << msg;
+      break;
+  }
+}
 
-        _el->delete_io_event(_pipe_watcher);
-        _el->delete_io_event(_io_watcher);
-        _el->stop();
+void SignalingServer::_stop() {
+  if (!_thread) {
+    RTC_LOG(LS_WARNING) << "signaling server not running";
+    return;
+  }
 
-        close(_notify_recv_fd);
-        close(_notify_send_fd);
-        close(_listen_fd);
-        
-        RTC_LOG(LS_INFO)<<"signaling server stop";
-    }
+  _el->delete_io_event(_pipe_watcher);
+  _el->delete_io_event(_io_watcher);
+  _el->stop();
 
-    void SignalingServer::join(){
-        if (_thread&&_thread->joinable())
-        {
-            _thread->join();
-        }
-    }
+  close(_notify_recv_fd);
+  close(_notify_send_fd);
+  close(_listen_fd);
 
-} // namespace xrtc
+  RTC_LOG(LS_INFO) << "signaling server stop";
+}
+
+void SignalingServer::join() {
+  if (_thread && _thread->joinable()) {
+    _thread->join();
+  }
+}
+
+}  // namespace xrtc

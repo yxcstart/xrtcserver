@@ -1,5 +1,5 @@
-#include <iostream>
 #include <signal.h>
+#include <iostream>
 #include "base/conf.h"
 #include "base/log.h"
 #include "server/signaling_server.h"
@@ -8,96 +8,82 @@ xrtc::Generalconf *g_conf = nullptr;
 xrtc::XrtcLog *g_log = nullptr;
 xrtc::SignalingServer *g_signaling_server = nullptr;
 
-int init_general_conf(const char *filename)
-{
-    if (!filename)
-    {
-        fprintf(stderr, "filename is nullptr");
-        return -1;
-    }
+int init_general_conf(const char *filename) {
+  if (!filename) {
+    fprintf(stderr, "filename is nullptr");
+    return -1;
+  }
 
-    g_conf = new xrtc::Generalconf();
+  g_conf = new xrtc::Generalconf();
 
-    int ret = load_general_conf(filename, g_conf);
-    if (ret != 0)
-    {
-        fprintf(stderr, "load %s config file failed\n", filename);
-        return -1;
-    }
+  int ret = load_general_conf(filename, g_conf);
+  if (ret != 0) {
+    fprintf(stderr, "load %s config file failed\n", filename);
+    return -1;
+  }
 
-    return 0;
+  return 0;
 }
 
 int init_log(const std::string &log_dir, const std::string &log_name,
-             const std::string &log_level)
-{
-    g_log = new xrtc::XrtcLog(log_dir, log_name, log_level);
-    int ret = g_log->init();
-    if (ret != 0)
-    {
-        fprintf(stderr, "init log failed\n");
-        return -1;
-    }
+             const std::string &log_level) {
+  g_log = new xrtc::XrtcLog(log_dir, log_name, log_level);
+  int ret = g_log->init();
+  if (ret != 0) {
+    fprintf(stderr, "init log failed\n");
+    return -1;
+  }
 
-    ret = g_log->start();
-    if (!ret)
-    {
-        fprintf(stderr, "log thread start failed\n");
-        return -1;
-    }
+  ret = g_log->start();
+  if (!ret) {
+    fprintf(stderr, "log thread start failed\n");
+    return -1;
+  }
 
-    return 0;
+  return 0;
 }
 
-int init_signaling_server()
-{
-    g_signaling_server = new xrtc::SignalingServer();
-    int ret = g_signaling_server->init("./conf/signaling_server.yaml");
-    if (ret != 0)
-    {
-        return -1;
-    }
+int init_signaling_server() {
+  g_signaling_server = new xrtc::SignalingServer();
+  int ret = g_signaling_server->init("./conf/signaling_server.yaml");
+  if (ret != 0) {
+    return -1;
+  }
 
-    return 0;
+  return 0;
 }
 
-static void process_signal(int sig){
-    RTC_LOG(LS_INFO)<<"receive signal: "<<sig;
-    if (SIGINT==sig||SIGTERM==sig)
-    {
-        if (g_signaling_server)
-        {
-            g_signaling_server->stop();
-        }
+static void process_signal(int sig) {
+  RTC_LOG(LS_INFO) << "receive signal: " << sig;
+  if (SIGINT == sig || SIGTERM == sig) {
+    if (g_signaling_server) {
+      g_signaling_server->stop();
     }
+  }
 }
 
-int main()
-{
-    int ret = init_general_conf("./conf/general.yaml");
-    if (ret != 0)
-    {
-        return -1;
-    }
+int main() {
+  int ret = init_general_conf("./conf/general.yaml");
+  if (ret != 0) {
+    return -1;
+  }
 
-    ret = init_log(g_conf->log_dir, g_conf->log_name, g_conf->log_level);
-    if (ret != 0)
-    {
-        return -1;
-    }
+  ret = init_log(g_conf->log_dir, g_conf->log_name, g_conf->log_level);
+  if (ret != 0) {
+    return -1;
+  }
 
-    g_log->set_log_to_stderr(g_conf->log_to_stderr);
+  g_log->set_log_to_stderr(g_conf->log_to_stderr);
 
-    ret = init_signaling_server();
-    if (ret != 0)
-    {
-        return -1;
-    }
+  ret = init_signaling_server();
+  if (ret != 0) {
+    return -1;
+  }
 
-    signal(SIGINT,process_signal);
-    signal(SIGTERM,process_signal);
+  signal(SIGINT, process_signal);
+  signal(SIGTERM, process_signal);
 
-    g_signaling_server->start();
-    g_signaling_server->join();
-    return 0;
+  g_signaling_server->start();
+  g_signaling_server->join();
+  return 0;
 }
