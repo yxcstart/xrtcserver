@@ -1,8 +1,9 @@
 #!/bin/bash
 
+curr_path=${PWD}
+
 function build_yaml(){
     echo "========build yaml-cpp========="
-    curr_path=${PWD}
     cd $curr_path/src/yaml-cpp
     rm -rf build
     mkdir build
@@ -35,11 +36,18 @@ function build_rtc(){
     cp third_party/lib/libabsl_throw_delegate.a ../../lib/
 }
 
-
+function build_libev(){
+    echo "========build libev========="
+    cd $curr_path/src/libev
+    ./configure --prefix=$curr_path
+    make 
+    make install
+}
 
 function main(){
     build_yaml
     build_rtc
+    build_libev
 }
 
 main

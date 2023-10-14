@@ -19,13 +19,11 @@ namespace xrtc
     {
         if (serverity >= rtc::LS_WARNING)
         {
-            std::cout << "serverity: " << serverity << " message: " << message << std::endl;
             std::unique_lock<std::mutex> lock(_mtx_wf);
             _log_queue_wf.push(message);
         }
         else
         {
-            std::cout << "serverity: " << serverity << " message: " << message << std::endl;
             std::unique_lock<std::mutex> lock(_mtx);
             _log_queue.push(message);
         }

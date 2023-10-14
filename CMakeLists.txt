@@ -15,10 +15,10 @@ link_directories(
     "./third_party/lib"
 )
 
-file(GLOB all_src "./src/*.cpp" "./src/base/*.cpp")
+file(GLOB all_src "./src/*.cpp" "./src/base/*.cpp" "./src/server/*.cpp")
 
 add_executable(xrtcserver ${all_src})
 
 target_link_libraries(xrtcserver libyaml-cpp.a librtcbase.a -lpthread
-    libabsl_strings.a libabsl_throw_delegate.a -no-pie
+    libabsl_strings.a libabsl_throw_delegate.a libev.a -no-pie
 )
