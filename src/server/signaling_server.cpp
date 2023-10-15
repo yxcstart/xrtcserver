@@ -18,10 +18,42 @@ void signaling_server_recv_notify(EventLoop *el, IOWatcher *w, int fd, int event
     server->_process_notify(msg);
 }
 
-void accept_new_conn(EventLoop *el, IOWatcher *w, int fd, int events, void *data) {}
+void accept_new_conn(EventLoop *el, IOWatcher *w, int fd, int events, void *data) {
+    int cfd;
+    char cip[128];
+    int cport;
+
+    cfd = tcp_accept(fd, cip, &cport);
+    if (-1 == cfd) {
+        return;
+    }
+
+    RTC_LOG(LS_INFO) << " accept new conn, fd: " << cfd << ", ip: " << cip << ", port: " << cport;
+    SignalingServer *server = (SignalingServer *)data;
+
+    server->_dispatch_new_conn(cfd);
+}
 
 SignalingServer::SignalingServer() : _el(new EventLoop(this)) {}
-SignalingServer::~SignalingServer() {}
+SignalingServer::~SignalingServer() {
+    if (_el) {
+        delete _el;
+        _el = nullptr;
+    }
+
+    if (_thread) {
+        delete _thread;
+        _thread = nullptr;
+    }
+
+    for (auto worker : _workers) {
+        if (worker) {
+            delete worker;
+        }
+    }
+
+    _workers.clear();
+}
 
 int SignalingServer::init(const char *conf_file) {
     if (!conf_file) {
@@ -61,7 +93,7 @@ int SignalingServer::init(const char *conf_file) {
     if (-1 == _listen_fd) {
         return -1;
     }
-
+    RTC_LOG(LS_INFO) << "signaling tcp server fd: " << _listen_fd;
     _io_watcher = _el->create_io_event(accept_new_conn, this);
     _el->start_io_event(_io_watcher, _listen_fd, EventLoop::READ);
 
@@ -88,7 +120,19 @@ int SignalingServer::_create_worker(int worker_id) {
         return -1;
     }
 
+    _workers.push_back(worker);
+
     return 0;
+}
+
+void SignalingServer::_dispatch_new_conn(int fd) {
+    int index = _next_worker_index;
+    _next_worker_index++;
+    if (_next_worker_index >= _workers.size()) {
+        _next_worker_index = 0;
+    }
+    SignalingWorker *worker = _workers[index];
+    worker->notify_new_conn(fd);
 }
 
 bool SignalingServer::start() {

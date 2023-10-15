@@ -7,7 +7,7 @@ namespace xrtc {
 
 void signaling_worker_recv_notify(EventLoop* el, IOWatcher* w, int fd, int events, void* data) {
     int msg;
-    if (read(fd, &msg, sizeof(int))) {
+    if (read(fd, &msg, sizeof(int)) != sizeof(int)) {
         RTC_LOG(LS_WARNING) << "read from pipe error: " << strerror(errno) << ", errno: " << errno;
         return;
     }
@@ -75,7 +75,12 @@ void SignalingWorker::_process_notify(int msg) {
         case QUIT:
             _stop();
             break;
-
+        case NEW_CONN:
+            int fd;
+            if (_q_conn.consume(&fd)) {
+                _new_conn(fd);
+            }
+            break;
         default:
             RTC_LOG(LS_WARNING) << "unknown msg: " << msg;
             break;
@@ -88,4 +93,12 @@ void SignalingWorker::join() {
     }
 }
 
+void SignalingWorker::_new_conn(int fd) {
+    RTC_LOG(LS_INFO) << "signaling worker " << _worker_id << ", receive fd: " << fd;
+}
+
+int SignalingWorker::notify_new_conn(int fd) {
+    _q_conn.produce(fd);
+    return notify(SignalingWorker::NEW_CONN);
+}
 }  // namespace xrtc
