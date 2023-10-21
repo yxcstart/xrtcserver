@@ -14,3 +14,4 @@ IncludeBlocks: Preserve
 
 # 缩进宽度
 IndentWidth: 4
+AccessModifierOffset: -4

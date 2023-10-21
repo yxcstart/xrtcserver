@@ -8,6 +8,7 @@
 namespace xrtc {
 
 void signaling_server_recv_notify(EventLoop *el, IOWatcher *w, int fd, int events, void *data) {
+    RTC_LOG(LS_INFO) << "from fd: " << fd << " recv_notify ";
     int msg;
     if (read(fd, &msg, sizeof(int)) != sizeof(int)) {
         RTC_LOG(LS_WARNING) << "read from pipe error: " << strerror(errno) << ", errno: " << errno;
@@ -28,7 +29,7 @@ void accept_new_conn(EventLoop *el, IOWatcher *w, int fd, int events, void *data
         return;
     }
 
-    RTC_LOG(LS_INFO) << " accept new conn, fd: " << cfd << ", ip: " << cip << ", port: " << cport;
+    RTC_LOG(LS_INFO) << "from fd: " << fd << " accept new conn, fd: " << cfd << ", ip: " << cip << ", port: " << cport;
     SignalingServer *server = (SignalingServer *)data;
 
     server->_dispatch_new_conn(cfd);
@@ -142,7 +143,7 @@ bool SignalingServer::start() {
     }
 
     _thread = new std::thread([=]() {
-        RTC_LOG(LS_INFO) << "signaling server event loop run";
+        RTC_LOG(LS_INFO) << "signaling server event loop start";
         _el->start();
         RTC_LOG(LS_INFO) << "signaling server event loop stop";
     });

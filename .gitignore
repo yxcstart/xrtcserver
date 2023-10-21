@@ -3,3 +3,4 @@ out/
 rtcbase/
 .vscode/
 log/
+nohup.out
