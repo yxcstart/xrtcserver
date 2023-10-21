@@ -1,6 +1,7 @@
 #ifndef __SIGNALING_WORKER_H_
 #define __SIGNALING_WORKER_H_
 
+#include <rtc_base/slice.h>
 #include <thread>
 #include <vector>
 #include "base/event_loop.h"
@@ -31,6 +32,10 @@ private:
     void _stop();
     void _new_conn(int fd);
     void _read_query(int fd);
+    int _process_query_buffer(TcpConnection* c);
+    int _process_request(TcpConnection* c, const rtc::Slice& header, const rtc::Slice& body);
+    void _close_conn(TcpConnection* c);
+    void _remove_conn(TcpConnection* c);
 
 private:
     int _worker_id;

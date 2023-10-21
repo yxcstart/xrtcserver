@@ -125,8 +125,72 @@ void SignalingWorker::_new_conn(int fd) {
 
 void SignalingWorker::_read_query(int fd) {
     RTC_LOG(LS_INFO) << "signaling worker " << _worker_id << " receive read event, fd: " << fd;
+    if (fd < 0 || (size_t)fd >= _conns.size()) {
+        RTC_LOG(LS_WARNING) << "invalid fd: " << fd;
+        return;
+    }
+    TcpConnection* c = _conns[fd];
+    int nread = 0;                     // 本次读取数据的大小
+    int read_len = c->bytes_expected;  // 本次期望读取数据的大小
+    int qb_len = sdslen(c->querybuf);  // querybuf 已经读取的长度
+    c->querybuf = sdsMakeRoomFor(c->querybuf, read_len);
+    nread = sock_read_data(fd, c->querybuf + qb_len, read_len);  // c->querybuf + qb_len 指针偏移
+    RTC_LOG(LS_INFO) << "sock read data, len: " << nread;
+
+    if (-1 == nread) {
+        _close_conn(c);
+        return;
+    } else if (nread > 0) {
+        sdsIncrLen(c->querybuf, nread);
+    }
+
+    int ret = _process_query_buffer(c);
+    if (ret != 0) {
+        _close_conn(c);
+        return;
+    }
 }
 
+void SignalingWorker::_close_conn(TcpConnection* c) {
+    close(c->fd);
+    _remove_conn(c);
+}
+
+void SignalingWorker::_remove_conn(TcpConnection* c) {
+    _el->delete_io_event(c->io_watcher);
+    _conns[c->fd] = nullptr;
+    delete c;
+}
+
+int SignalingWorker::_process_query_buffer(TcpConnection* c) {
+    while (sdslen(c->querybuf) >= c->bytes_processed + c->bytes_expected) {
+        xhead_t* head = (xhead_t*)(c->querybuf);
+        if (TcpConnection::STATE_HEAD == c->current_state) {
+            if (XHEADER_MAGIC_NUM != head->magic_num) {
+                RTC_LOG(LS_WARNING) << "invalid data, fd: " << c->fd;
+                return -1;
+            }
+            c->current_state = TcpConnection::STATE_BODY;
+            c->bytes_processed = XHEAD_SIZE;
+            c->bytes_processed = head->body_len;
+        } else {
+            rtc::Slice header(c->querybuf, XHEAD_SIZE);
+            rtc::Slice body(c->querybuf + XHEAD_SIZE, head->body_len);
+
+            int ret = _process_request(c, header, body);
+            if (ret != 0) {
+                return -1;
+            }
+
+            c->bytes_processed = 65535;
+        }
+    }
+}
+
+int SignalingWorker::_process_request(TcpConnection* c, const rtc::Slice& header, const rtc::Slice& body) {
+    RTC_LOG(LS_INFO) << "receive body: " << body.data();
+    return 0;
+}
 int SignalingWorker::notify_new_conn(int fd) {
     _q_conn.produce(fd);
     return notify(SignalingWorker::NEW_CONN);
