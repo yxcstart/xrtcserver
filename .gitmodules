@@ -5,3 +5,7 @@
 [submodule "third_party/src/libev"]
 	path = third_party/src/libev
 	url = https://github.com/enki/libev.git
+
+[submodule "third_party/src/jsoncpp"]
+	path = third_party/src/jsoncpp
+	url = https://github.com/open-source-parsers/jsoncpp.git
