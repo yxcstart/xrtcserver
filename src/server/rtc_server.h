@@ -40,6 +40,7 @@ private:
     void _stop();
     int _create_worker(int worker_id);
     void _process_rtc_msg();
+    RtcWorker* _get_worker(const std::string& stream_name);
 
 private:
     EventLoop* _el;

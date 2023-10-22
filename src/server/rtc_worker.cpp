@@ -116,8 +116,7 @@ void RtcWorker::_process_rtc_msg() {
         return;
     }
     RTC_LOG(LS_INFO) << "cmdno[" << msg->cmdno << "] uid[" << msg->uid << "] stream_name[" << msg->stream_name
-                     << "] audio[" << msg->audio << "] video[" << msg->video << "] log_id["
-                     << "msg->log_id"
+                     << "] audio[" << msg->audio << "] video[" << msg->video << "] log_id[" << msg->log_id
                      << "] rtc worker receive msg, worker_id: " << _worker_id;
 
     switch (msg->cmdno) {
@@ -126,8 +125,7 @@ void RtcWorker::_process_rtc_msg() {
             break;
 
         default:
-            RTC_LOG(LS_WARNING) << "unknown cmdno: " << msg->cmdno << ", log_id: "
-                                << "msg->log_id";
+            RTC_LOG(LS_WARNING) << "unknown cmdno: " << msg->cmdno << ", log_id: " << msg->log_id;
             break;
     }
 }
