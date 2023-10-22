@@ -22,7 +22,7 @@ class SignalingServer {
 
     friend void accept_new_conn(EventLoop *el, IOWatcher *w, int fd, int events, void *data);
 
-   public:
+public:
     enum { QUIT = 0 };
 
     SignalingServer();
@@ -34,13 +34,13 @@ class SignalingServer {
     int notify(int msg);
     void join();
 
-   private:
+private:
     void _process_notify(int msg);
     void _stop();
     int _create_worker(int worker_id);
     void _dispatch_new_conn(int fd);
 
-   private:
+private:
     SignalingServerOptions _options;
     EventLoop *_el;
     IOWatcher *_io_watcher = nullptr;

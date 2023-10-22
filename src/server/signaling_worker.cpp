@@ -2,11 +2,13 @@
 #include <rtc_base/logging.h>
 #include <unistd.h>
 #include "base/socket.h"
+#include "server/rtc_server.h"
 #include "server/tcp_connection.h"
 #include "xrtcserver_def.h"
 
-namespace xrtc {
+extern xrtc::RtcServer* g_rtc_server;
 
+namespace xrtc {
 void signaling_worker_recv_notify(EventLoop* el, IOWatcher* w, int fd, int events, void* data) {
     int msg;
     if (read(fd, &msg, sizeof(int)) != sizeof(int)) {
@@ -291,7 +293,7 @@ int SignalingWorker::_process_push(int cmdno, TcpConnection* c, const Json::Valu
     msg->audio = audio;
     msg->video = video;
 
-    return 0;
+    return g_rtc_server->send_rtc_msg(msg);
 }
 
 int SignalingWorker::notify_new_conn(int fd) {
