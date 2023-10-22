@@ -6,6 +6,7 @@
 #include <vector>
 #include "base/event_loop.h"
 #include "base/lock_free_queue.h"
+#include "server/signaling_server.h"
 #include "server/tcp_connection.h"
 
 namespace xrtc {
@@ -13,11 +14,12 @@ namespace xrtc {
 class SignalingWorker {
     friend void signaling_worker_recv_notify(EventLoop* el, IOWatcher* w, int fd, int events, void* data);
     friend void conn_io_cb(EventLoop* el, IOWatcher* w, int fd, int events, void* data);
+    friend void conn_time_cb(EventLoop* el, TimeWatcher* w, void* data);
 
 public:
     enum { QUIT = 0, NEW_CONN = 1 };
 
-    SignalingWorker(int worker_id);
+    SignalingWorker(int worker_id, const SignalingServerOptions& option);
     ~SignalingWorker();
 
     int init();
@@ -36,9 +38,11 @@ private:
     int _process_request(TcpConnection* c, const rtc::Slice& header, const rtc::Slice& body);
     void _close_conn(TcpConnection* c);
     void _remove_conn(TcpConnection* c);
+    void _process_timeout(TcpConnection* c);
 
 private:
     int _worker_id;
+    SignalingServerOptions _options;
     EventLoop* _el;
     IOWatcher* _pipe_watcher = nullptr;
     int _notify_recv_fd = -1;

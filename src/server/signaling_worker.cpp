@@ -16,9 +16,28 @@ void signaling_worker_recv_notify(EventLoop* el, IOWatcher* w, int fd, int event
     worker->_process_notify(msg);
 }
 
-SignalingWorker::SignalingWorker(int worker_id) : _worker_id(worker_id), _el(new EventLoop(this)) {}
+SignalingWorker::SignalingWorker(int worker_id, const SignalingServerOptions& options)
+    : _worker_id(worker_id), _options(options), _el(new EventLoop(this)) {}
 
-SignalingWorker::~SignalingWorker() {}
+SignalingWorker::~SignalingWorker() {
+    for (auto c : _conns) {
+        if (c) {
+            _close_conn(c);
+        }
+    }
+
+    _conns.clear();
+
+    if (_el) {
+        delete _el;
+        _el = nullptr;
+    }
+
+    if (_thread) {
+        delete _thread;
+        _thread = nullptr;
+    }
+}
 
 int SignalingWorker::init() {
     int fds[2];
@@ -101,6 +120,19 @@ void conn_io_cb(EventLoop* /*el*/, IOWatcher* /*w*/, int fd, int events, void* d
     }
 }
 
+void conn_time_cb(EventLoop* el, TimeWatcher* w, void* data) {
+    SignalingWorker* worker = (SignalingWorker*)(el->owner());
+    TcpConnection* c = (TcpConnection*)data;
+    worker->_process_timeout(c);
+}
+
+void SignalingWorker::_process_timeout(TcpConnection* c) {
+    if (_el->now() - c->last_interaction >= (unsigned long)_options.connection_timeout) {
+        RTC_LOG(LS_INFO) << "connection timeout, fd: " << c->fd;
+        _close_conn(c);
+    }
+}
+
 void SignalingWorker::_new_conn(int fd) {
     RTC_LOG(LS_INFO) << "signaling worker " << _worker_id << ", receive fd: " << fd;
     if (fd < 0) {
@@ -115,6 +147,11 @@ void SignalingWorker::_new_conn(int fd) {
     sock_peer_to_str(fd, c->ip, &(c->port));
     c->io_watcher = _el->create_io_event(conn_io_cb, this);
     _el->start_io_event(c->io_watcher, fd, EventLoop::READ);
+
+    c->timer_watcher = _el->create_timer(conn_time_cb, c, true);
+    _el->start_timer(c->timer_watcher, 100000);
+
+    c->last_interaction = _el->now();
 
     if ((size_t)fd >= _conns.size()) {
         _conns.resize(fd * 2, nullptr);
@@ -135,6 +172,9 @@ void SignalingWorker::_read_query(int fd) {
     int qb_len = sdslen(c->querybuf);  // querybuf 已经读取的长度
     c->querybuf = sdsMakeRoomFor(c->querybuf, read_len);
     nread = sock_read_data(fd, c->querybuf + qb_len, read_len);  // c->querybuf + qb_len 指针偏移
+
+    c->last_interaction = _el->now();
+
     RTC_LOG(LS_INFO) << "sock read data, len: " << nread;
 
     if (-1 == nread) {
@@ -152,11 +192,13 @@ void SignalingWorker::_read_query(int fd) {
 }
 
 void SignalingWorker::_close_conn(TcpConnection* c) {
+    RTC_LOG(LS_INFO) << "close connection, fd: " << c->fd;
     close(c->fd);
     _remove_conn(c);
 }
 
 void SignalingWorker::_remove_conn(TcpConnection* c) {
+    _el->delete_timer(c->timer_watcher);  // 删除conn之前，先将定时器删除
     _el->delete_io_event(c->io_watcher);
     _conns[c->fd] = nullptr;
     delete c;

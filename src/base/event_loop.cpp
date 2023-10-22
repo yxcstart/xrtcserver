@@ -14,14 +14,16 @@ void EventLoop::start() { ev_run(_loop); }
 
 void EventLoop::stop() { ev_break(_loop, EVBREAK_ALL); }
 
+unsigned long EventLoop::now() { return static_cast<unsigned long>(ev_now(_loop) * 1000000); }
+
 class IOWatcher {
-   public:
+public:
     EventLoop *el;
     ev_io io;
     io_cb_t cb;
     void *data;
 
-   public:
+public:
     IOWatcher(EventLoop *el, io_cb_t cb, void *data) : el(el), cb(cb), data(data) { io.data = this; }
     // ~IOWatcher();
 };
@@ -82,14 +84,14 @@ void EventLoop::delete_io_event(IOWatcher *w) {
 }
 
 class TimeWatcher {
-   public:
+public:
     EventLoop *el;
     struct ev_timer timer;
     time_cb_t cb;
     void *data;
     bool need_repeat;
 
-   public:
+public:
     TimeWatcher(EventLoop *el, time_cb_t cb, void *data, bool need_repeat)
         : el(el), cb(cb), data(data), need_repeat(need_repeat) {
         timer.data = this;
@@ -112,6 +114,7 @@ void EventLoop::start_timer(TimeWatcher *w, unsigned int usec) {
     float sec = float(usec) / 1000000;
 
     if (!w->need_repeat) {
+        ev_timer_stop(_loop, timer);
         ev_timer_set(timer, sec, 0);
         ev_timer_start(_loop, timer);
     } else {

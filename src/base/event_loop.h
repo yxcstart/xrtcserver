@@ -12,17 +12,19 @@ class TimeWatcher;
 typedef void (*io_cb_t)(EventLoop *el, IOWatcher *w, int fd, int events, void *data);
 typedef void (*time_cb_t)(EventLoop *el, TimeWatcher *w, void *data);
 class EventLoop {
-   private:
+private:
     void *_owner;
     struct ev_loop *_loop;
 
-   public:
+public:
     enum { READ = 0x1, WRITE = 0x2 };
 
     EventLoop(void *owner);
     ~EventLoop();
     void start();
     void stop();
+    void *owner() { return _owner; }
+    unsigned long now();
 
     IOWatcher *create_io_event(io_cb_t cb, void *data);
     void start_io_event(IOWatcher *w, int fd, int mask);

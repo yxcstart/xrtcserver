@@ -18,10 +18,12 @@ public:
     char ip[64];
     int port;
     IOWatcher* io_watcher = nullptr;
+    TimeWatcher* timer_watcher = nullptr;
     sds querybuf;
     size_t bytes_expected = XHEAD_SIZE;
     size_t bytes_processed = 0;
     int current_state = STATE_HEAD;
+    unsigned long last_interaction = 0;
 };
 }  // namespace xrtc
 #endif  //__TCP_CONNECTION_H_
