@@ -1,6 +1,7 @@
 #ifndef __SIGNALING_WORKER_H_
 #define __SIGNALING_WORKER_H_
 
+#include <json/json.h>
 #include <rtc_base/slice.h>
 #include <thread>
 #include <vector>
@@ -39,6 +40,7 @@ private:
     void _close_conn(TcpConnection* c);
     void _remove_conn(TcpConnection* c);
     void _process_timeout(TcpConnection* c);
+    int _process_push(int cmdno, TcpConnection* c, const Json::Value& root, uint32_t log_id);
 
 private:
     int _worker_id;

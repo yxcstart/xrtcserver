@@ -20,5 +20,5 @@ file(GLOB all_src "./src/*.cpp" "./src/base/*.cpp" "./src/server/*.cpp")
 add_executable(xrtcserver ${all_src})
 
 target_link_libraries(xrtcserver libyaml-cpp.a librtcbase.a -lpthread
-    libabsl_strings.a libabsl_throw_delegate.a libev.a -no-pie
+    libabsl_strings.a libabsl_throw_delegate.a libev.a libjsoncpp.a -no-pie
 )
