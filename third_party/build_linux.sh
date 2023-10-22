@@ -44,10 +44,22 @@ function build_libev(){
     make install
 }
 
+function build_jsoncpp(){
+    echo "========build jsoncpp========="
+    cd $curr_path/src/jsoncpp
+    rm -rf build
+    mkdir build
+    cd build
+    cmake -DCMAKE_INSTALL_PREFIX=$curr_path ../
+    make
+    make install
+}
+
 function main(){
     build_yaml
     build_rtc
     build_libev
+    build_jsoncpp
 }
 
 main
