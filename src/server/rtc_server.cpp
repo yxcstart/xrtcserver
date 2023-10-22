@@ -1,9 +1,9 @@
 
-
 #include "server/rtc_server.h"
 #include <rtc_base/logging.h>
 #include <unistd.h>
 #include <yaml-cpp/yaml.h>
+#include "server/rtc_worker.h"
 
 namespace xrtc {
 
@@ -18,7 +18,24 @@ void rtc_server_recv_notify(EventLoop* /*el*/, IOWatcher* /*w*/, int fd, int /*e
     server->_process_notify(msg);
 }
 RtcServer::RtcServer() : _el(new EventLoop(this)) {}
-RtcServer::~RtcServer() {}
+RtcServer::~RtcServer() {
+    if (_el) {
+        delete _el;
+        _el = nullptr;
+    }
+
+    if (_thread) {
+        delete _thread;
+        _thread = nullptr;
+    }
+
+    for (auto worker : _workers) {
+        if (worker) {
+            delete worker;
+        }
+    }
+    _workers.clear();
+}
 
 int RtcServer::init(const char* conf_file) {
     if (!conf_file) {
@@ -46,6 +63,27 @@ int RtcServer::init(const char* conf_file) {
 
     _pipe_watcher = _el->create_io_event(rtc_server_recv_notify, this);
     _el->start_io_event(_pipe_watcher, _notify_recv_fd, EventLoop::READ);
+
+    for (int i = 0; i < _options.worker_num; i++) {
+        if (_create_worker(i) != 0) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int RtcServer::_create_worker(int worker_id) {
+    RTC_LOG(LS_INFO) << "rtc server create worker, worker_id: " << worker_id;
+    RtcWorker* worker = new RtcWorker(worker_id, _options);
+    if (worker->init() != 0) {
+        return -1;
+    }
+    if (!worker->start()) {
+        return -1;
+    }
+
+    _workers.push_back(worker);
 
     return 0;
 }
@@ -94,6 +132,11 @@ std::shared_ptr<RtcMsg> RtcServer::pop_msg() {
 }
 
 void RtcServer::_stop() {
+    if (!_thread) {
+        RTC_LOG(LS_WARNING) << "rtc server not running";
+        return;
+    }
+
     _el->delete_io_event(_pipe_watcher);
     _el->stop();
     close(_notify_recv_fd);
