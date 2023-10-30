@@ -2,6 +2,7 @@
 #include <rtc_base/logging.h>
 #include <server/rtc_worker.h>
 #include <unistd.h>
+#include "server/signaling_worker.h"
 
 namespace xrtc {
 void rtc_worker_recv_notify(EventLoop* /*el*/, IOWatcher* /*w*/, int fd, int /*events*/, void* data) {
@@ -130,6 +131,13 @@ void RtcWorker::_process_rtc_msg() {
     }
 }
 
-void RtcWorker::_process_push(std::shared_ptr<RtcMsg> msg) {}
+void RtcWorker::_process_push(std::shared_ptr<RtcMsg> msg) {
+    std::string offer = "offer";
+    msg->sdp = offer;
+    SignalingWorker* worker = (SignalingWorker*)(msg->worker);
+    if (worker) {
+        worker->send_rtc_msg(msg);
+    }
+}
 
 }  // namespace xrtc
