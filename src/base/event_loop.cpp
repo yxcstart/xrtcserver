@@ -65,7 +65,7 @@ void EventLoop::start_io_event(IOWatcher *w, int fd, int mask) {
 void EventLoop::stop_io_event(IOWatcher *w, int fd, int mask) {
     struct ev_io *io = &(w->io);
     int active_events = TRANS_FROM_EV_MASK(io->events);
-    int events = active_events | ~mask;
+    int events = active_events & ~mask;
     if (events == active_events) {
         return;
     }
@@ -74,6 +74,7 @@ void EventLoop::stop_io_event(IOWatcher *w, int fd, int mask) {
     ev_io_stop(_loop, io);
     if (events != EV_NONE) {
         ev_io_set(io, fd, events);
+        ev_io_start(_loop, io);
     }
 }
 

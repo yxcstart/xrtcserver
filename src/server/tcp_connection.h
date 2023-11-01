@@ -2,6 +2,8 @@
 #define __TCP_CONNECTION_H_
 
 #include <rtc_base/sds.h>
+#include <rtc_base/slice.h>
+#include <list>
 #include "base/event_loop.h"
 #include "base/xhead.h"
 
@@ -24,6 +26,8 @@ public:
     size_t bytes_processed = 0;
     int current_state = STATE_HEAD;
     unsigned long last_interaction = 0;
+    std::list<rtc::Slice> reply_list;
+    size_t cur_resp_pos = 0;
 };
 }  // namespace xrtc
 #endif  //__TCP_CONNECTION_H_
