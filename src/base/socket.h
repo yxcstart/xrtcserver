@@ -11,4 +11,4 @@ int sock_read_data(int sock, char* buf, size_t len);
 int sock_write_data(int sock, const char* buf, size_t len);
 }  // namespace xrtc
 
-#endif __BASE_SOCKET_H_
+#endif  //__BASE_SOCKET_H_

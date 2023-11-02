@@ -11,4 +11,4 @@ public:
 };
 }  // namespace xrtc
 
-#endif __PUSH_STREAM_H_
+#endif  //__PUSH_STREAM_H_

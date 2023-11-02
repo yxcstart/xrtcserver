@@ -11,7 +11,7 @@
 extern xrtc::RtcServer* g_rtc_server;
 
 namespace xrtc {
-void signaling_worker_recv_notify(EventLoop* el, IOWatcher* w, int fd, int events, void* data) {
+void signaling_worker_recv_notify(EventLoop* /*el*/, IOWatcher* /*w*/, int fd, int /*events*/, void* data) {
     int msg;
     if (read(fd, &msg, sizeof(int)) != sizeof(int)) {
         RTC_LOG(LS_WARNING) << "read from pipe error: " << strerror(errno) << ", errno: " << errno;
@@ -232,7 +232,7 @@ void conn_io_cb(EventLoop* /*el*/, IOWatcher* /*w*/, int fd, int events, void* d
     }
 }
 
-void conn_time_cb(EventLoop* el, TimeWatcher* w, void* data) {
+void conn_time_cb(EventLoop* el, TimeWatcher* /*w*/, void* data) {
     SignalingWorker* worker = (SignalingWorker*)(el->owner());
     TcpConnection* c = (TcpConnection*)data;
     worker->_process_timeout(c);
@@ -339,6 +339,7 @@ int SignalingWorker::_process_query_buffer(TcpConnection* c) {
             c->bytes_processed = 65535;
         }
     }
+    return 0;
 }
 
 int SignalingWorker::_process_request(TcpConnection* c, const rtc::Slice& header, const rtc::Slice& body) {
@@ -359,7 +360,7 @@ int SignalingWorker::_process_request(TcpConnection* c, const rtc::Slice& header
     int cmdno;
     try {
         cmdno = root["cmdno"].asInt();
-    } catch (Json::Exception e) {
+    } catch (Json::Exception& e) {
         RTC_LOG(LS_WARNING) << "no cmdno field in body, log_id: " << xh->log_id;
         return -1;
     }
@@ -387,7 +388,7 @@ int SignalingWorker::_process_push(int cmdno, TcpConnection* c, const Json::Valu
         stream_name = root["stream_name"].asString();
         audio = root["audio"].asInt();
         video = root["video"].asInt();
-    } catch (Json::Exception e) {
+    } catch (Json::Exception& e) {
         RTC_LOG(LS_WARNING) << "parse json body error: " << e.what() << "log_id: " << log_id;
         return -1;
     }

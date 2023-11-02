@@ -2,7 +2,7 @@
 #define _RTC_STREAM_MANAGER_H_
 #include <string>
 #include "base/event_loop.h"
-
+#include "stream/push_stream.h"
 namespace xrtc {
 class RtcStreamManager {
 public:

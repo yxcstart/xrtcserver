@@ -22,4 +22,4 @@ protected:
 
 }  // namespace xrtc
 
-#endif __RTC_STREAM_H_
+#endif  //__RTC_STREAM_H_

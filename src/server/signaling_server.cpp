@@ -7,7 +7,7 @@
 
 namespace xrtc {
 
-void signaling_server_recv_notify(EventLoop *el, IOWatcher *w, int fd, int events, void *data) {
+void signaling_server_recv_notify(EventLoop * /* el*/, IOWatcher * /*w*/, int fd, int /*events*/, void *data) {
     RTC_LOG(LS_INFO) << "from fd: " << fd << " recv_notify ";
     int msg;
     if (read(fd, &msg, sizeof(int)) != sizeof(int)) {
@@ -19,7 +19,7 @@ void signaling_server_recv_notify(EventLoop *el, IOWatcher *w, int fd, int event
     server->_process_notify(msg);
 }
 
-void accept_new_conn(EventLoop *el, IOWatcher *w, int fd, int events, void *data) {
+void accept_new_conn(EventLoop * /*el*/, IOWatcher * /*w*/, int fd, int /*events*/, void *data) {
     int cfd;
     char cip[128];
     int cport;
@@ -70,7 +70,7 @@ int SignalingServer::init(const char *conf_file) {
         _options.port = config["port"].as<int>();
         _options.worker_num = config["worker_num"].as<int>();
         _options.connection_timeout = config["connection_timeout"].as<int>();
-    } catch (const YAML::Exception e) {
+    } catch (const YAML::Exception &e) {
         RTC_LOG(LS_ERROR) << "catch a YAML exception, line:" << e.mark.line + 1 << ", column: " << e.mark.column + 1
                           << ", error: " << e.msg;
         return -1;
@@ -129,7 +129,7 @@ int SignalingServer::_create_worker(int worker_id) {
 void SignalingServer::_dispatch_new_conn(int fd) {
     int index = _next_worker_index;
     _next_worker_index++;
-    if (_next_worker_index >= _workers.size()) {
+    if ((size_t)_next_worker_index >= _workers.size()) {
         _next_worker_index = 0;
     }
     SignalingWorker *worker = _workers[index];

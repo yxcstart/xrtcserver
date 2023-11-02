@@ -32,8 +32,8 @@ private:
     void _process_push(std::shared_ptr<RtcMsg> msg);
 
 private:
-    RtcServerOptions _options;
     int _worker_id;
+    RtcServerOptions _options;
     EventLoop* _el;
 
     IOWatcher* _pipe_watcher = nullptr;

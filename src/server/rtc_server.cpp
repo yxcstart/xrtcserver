@@ -48,7 +48,7 @@ int RtcServer::init(const char* conf_file) {
         YAML::Node config = YAML::LoadFile(conf_file);
         RTC_LOG(LS_INFO) << "rtc server options:\n" << config;
         _options.worker_num = config["worker_num"].as<int>();
-    } catch (YAML::Exception e) {
+    } catch (YAML::Exception& e) {
         RTC_LOG(LS_WARNING) << "rtc server load conf file error: " << e.msg;
         return -1;
     }
