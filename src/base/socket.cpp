@@ -149,7 +149,7 @@ int sock_read_data(int sock, char* buf, size_t len) {
             return -1;
         }
     } else if (0 == nread) {
-        RTC_LOG(LS_WARNING) << "connection closed, fd: " << sock;
+        RTC_LOG(LS_WARNING) << "connection closed by peer, fd: " << sock;
         return -1;
     }
 
