@@ -8,4 +8,7 @@ PushStream::PushStream(EventLoop* el, uint64_t uid, const std::string& stream_na
                        uint32_t log_id)
     : RtcStream(el, uid, stream_name, audio, video, log_id) {}
 PushStream::~PushStream() {}
+
+std::string PushStream::create_offer() { return pc->create_offer(); }
+
 }  // namespace xrtc

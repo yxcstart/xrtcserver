@@ -15,7 +15,13 @@ link_directories(
     "./third_party/lib"
 )
 
-file(GLOB all_src "./src/*.cpp" "./src/base/*.cpp" "./src/server/*.cpp"  "./src/stream/*.cpp")
+file(GLOB all_src 
+    "./src/*.cpp" 
+    "./src/base/*.cpp" 
+    "./src/server/*.cpp"  
+    "./src/stream/*.cpp"
+    "./src/pc/*.cpp"
+)
 
 add_executable(xrtcserver ${all_src})
 
