@@ -23,7 +23,9 @@ class SignalingServer {
     friend void accept_new_conn(EventLoop *el, IOWatcher *w, int fd, int events, void *data);
 
 public:
-    enum { QUIT = 0 };
+    enum {
+        QUIT = 0,
+    };
 
     SignalingServer();
     ~SignalingServer();

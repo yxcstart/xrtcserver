@@ -21,7 +21,11 @@ class SignalingWorker {
     friend void conn_time_cb(EventLoop* el, TimeWatcher* w, void* data);
 
 public:
-    enum { QUIT = 0, NEW_CONN = 1, RTC_MSG = 2 };
+    enum {
+        QUIT = 0,
+        NEW_CONN = 1,
+        RTC_MSG = 2,
+    };
 
     SignalingWorker(int worker_id, const SignalingServerOptions& option);
     ~SignalingWorker();

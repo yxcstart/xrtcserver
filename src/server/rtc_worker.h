@@ -14,7 +14,10 @@ class RtcWorker {
     friend void rtc_worker_recv_notify(EventLoop*, IOWatcher*, int, int, void*);
 
 public:
-    enum { QUIT = 0, RTC_MSG = 1 };
+    enum {
+        QUIT = 0,
+        RTC_MSG = 1,
+    };
 
     RtcWorker(int worker_id, const RtcServerOptions& options);
     ~RtcWorker();

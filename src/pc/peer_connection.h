@@ -8,12 +8,17 @@
 
 namespace xrtc {
 
+struct RTCOfferAnswerOptions {
+    bool recv_video = true;
+    bool recv_audio = true;
+};
+
 class PeerConnection {
 public:
     PeerConnection(EventLoop* el);
     ~PeerConnection();
 
-    std::string create_offer();
+    std::string create_offer(const RTCOfferAnswerOptions& options);
 
 private:
     EventLoop* _el;

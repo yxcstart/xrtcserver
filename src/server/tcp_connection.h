@@ -10,7 +10,10 @@
 namespace xrtc {
 class TcpConnection {
 public:
-    enum { STATE_HEAD = 0, STATE_BODY = 1 };
+    enum {
+        STATE_HEAD = 0,
+        STATE_BODY = 1,
+    };
 
     TcpConnection(int fd);
     ~TcpConnection();
