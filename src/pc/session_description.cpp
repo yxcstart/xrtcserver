@@ -2,6 +2,33 @@
 #include <sstream>
 namespace xrtc {
 
+const char k_media_protocol_dtls_savpf[] = "UDP/TLS/RTP/SAVPF";
+const char k_meida_protocol_savpf[] = "RTP/SAVPF";
+
+AudioContentDescription::AudioContentDescription() {
+    auto codec = std::make_shared<AudioCodecInfo>();
+    codec->id = 111;
+    codec->name = "opus";
+    codec->clockrate = 48000;
+    codec->channels = 2;
+
+    _codecs.push_back(codec);
+}
+
+VideoContentDescription::VideoContentDescription() {
+    auto codec = std::make_shared<VideoCodecInfo>();
+    codec->id = 111;
+    codec->name = "H264";
+    codec->clockrate = 90000;
+    _codecs.push_back(codec);
+
+    auto rtx_codec = std::make_shared<VideoCodecInfo>();
+    rtx_codec->id = 99;
+    rtx_codec->name = "rtx";
+    rtx_codec->clockrate = 90000;
+    _codecs.push_back(rtx_codec);
+}
+
 bool ContentGroup::has_content_name(const std::string& content_name) {
     for (auto name : _content_names) {
         if (name == content_name) {

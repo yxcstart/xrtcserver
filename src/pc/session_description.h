@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "pc/codec_info.h"
 
 namespace xrtc {
 
@@ -19,19 +20,26 @@ enum class MediaType {
 
 class MediaContentDescription {
 public:
-    ~MediaContentDescription() {}
+    virtual ~MediaContentDescription() {}
     virtual MediaType type() = 0;
     virtual std::string mid() = 0;
+
+    const std::vector<std::shared_ptr<CodecInfo>>& get_codecs() const { return _codecs; }
+
+protected:
+    std::vector<std::shared_ptr<CodecInfo>>& _codecs;
 };
 
 class AudioContentDescription : public MediaContentDescription {
 public:
+    AudioContentDescription();
     MediaType type() override { return MediaType::MEDIA_TYPE_AUDIO; }
     std::string mid() override { return "audio"; }
 };
 
 class VideoContentDescription : public MediaContentDescription {
 public:
+    VideoContentDescription();
     MediaType type() override { return MediaType::MEDIA_TYPE_VIDEO; }
     std::string mid() override { return "video"; }
 };
@@ -71,4 +79,5 @@ private:
 };
 
 }  // namespace xrtc
+
 #endif  //__SESSION_DESCRIPTION_H_
