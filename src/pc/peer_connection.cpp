@@ -18,6 +18,17 @@ std::string PeerConnection::create_offer(const RTCOfferAnswerOptions& options) {
         _local_desc->add_content(video);
     }
 
+    if (options.use_rtp_mux) {
+        ContentGroup offer_bundle("BUNDLE");
+        for (auto content : _local_desc->contents()) {
+            offer_bundle.add_content_name(content->mid());
+        }
+
+        if (!offer_bundle.content_names().empty()) {
+            _local_desc->add_group(offer_bundle);
+        }
+    }
+
     return _local_desc->to_string();
 }
 
