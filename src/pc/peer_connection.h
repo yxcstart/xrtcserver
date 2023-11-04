@@ -11,7 +11,10 @@ namespace xrtc {
 struct RTCOfferAnswerOptions {
     bool recv_video = true;
     bool recv_audio = true;
+    bool send_video = true;
+    bool send_audio = true;
     bool use_rtp_mux = true;
+    bool use_rtcp_mux = true;
 };
 
 class PeerConnection {

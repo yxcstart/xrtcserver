@@ -18,6 +18,13 @@ enum class MediaType {
     MEDIA_TYPE_VIDEO,
 };
 
+enum class RtpDirection {
+    k_send_recv,
+    k_send_only,
+    k_recv_only,
+    k_inactive,
+};
+
 class MediaContentDescription {
 public:
     virtual ~MediaContentDescription() {}
@@ -26,8 +33,16 @@ public:
 
     const std::vector<std::shared_ptr<CodecInfo>>& get_codecs() const { return _codecs; }
 
+    RtpDirection direction() { return _direction; }
+    void set_direction(RtpDirection direction) { _direction = direction; }
+
+    bool rtcp_mux() { return _rtcp_mux; }
+    void set_rtcp_mux(bool mux) { _rtcp_mux = mux; }
+
 protected:
     std::vector<std::shared_ptr<CodecInfo>> _codecs;
+    RtpDirection _direction;
+    bool _rtcp_mux = true;
 };
 
 class AudioContentDescription : public MediaContentDescription {
