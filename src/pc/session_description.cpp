@@ -17,7 +17,7 @@ AudioContentDescription::AudioContentDescription() {
 
 VideoContentDescription::VideoContentDescription() {
     auto codec = std::make_shared<VideoCodecInfo>();
-    codec->id = 111;
+    codec->id = 107;
     codec->name = "H264";
     codec->clockrate = 90000;
     _codecs.push_back(codec);
@@ -44,7 +44,7 @@ void ContentGroup::add_content_name(const std::string& content_name) {
     }
 }
 
-SessionDescription::SessionDescription(SdpType type) : _sdk_type(type) {}
+SessionDescription::SessionDescription(SdpType type) : _sdp_type(type) {}
 
 SessionDescription::~SessionDescription() {}
 
@@ -70,6 +70,22 @@ std::string SessionDescription::to_string() {
             }
         }
         ss << "\r\n";
+    }
+
+    ss << "a=msid-semantic: WMS\r\n";
+
+    for (auto content : _contents) {
+        // RFC 4566
+        // m=<media> <port> <proto> <fmt>
+        std::string fmt;
+        for (auto codec : content->get_codecs()) {
+            fmt.append(" ");
+            fmt.append(std::to_string(codec->id));
+        }
+
+        ss << "m=" << content->mid() << " 9 " << k_media_protocol_dtls_savpf << fmt << "\r\n";
+        ss << "c=IN IP4 0.0.0.0\r\n";
+        ss << "a=rtcp:9 IN IP4 0.0.0.0\r\n";
     }
 
     return ss.str();

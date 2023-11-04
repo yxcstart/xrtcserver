@@ -27,7 +27,7 @@ public:
     const std::vector<std::shared_ptr<CodecInfo>>& get_codecs() const { return _codecs; }
 
 protected:
-    std::vector<std::shared_ptr<CodecInfo>>& _codecs;
+    std::vector<std::shared_ptr<CodecInfo>> _codecs;
 };
 
 class AudioContentDescription : public MediaContentDescription {
@@ -73,7 +73,7 @@ public:
     std::string to_string();
 
 private:
-    SdpType _sdk_type;
+    SdpType _sdp_type;
     std::vector<std::shared_ptr<MediaContentDescription>> _contents;
     std::vector<ContentGroup> _content_groups;
 };
