@@ -1,5 +1,7 @@
 #include "pc/session_description.h"
+#include <rtc_base/logging.h>
 #include <sstream>
+
 namespace xrtc {
 
 const char k_media_protocol_dtls_savpf[] = "UDP/TLS/RTP/SAVPF";
@@ -69,6 +71,36 @@ void ContentGroup::add_content_name(const std::string& content_name) {
 SessionDescription::SessionDescription(SdpType type) : _sdp_type(type) {}
 
 SessionDescription::~SessionDescription() {}
+
+bool SessionDescription::add_transport_info(const std::string& mid, const IceParameters& ice_param,
+                                            rtc::RTCCertificate* certificate) {
+    auto tdesc = std::make_shared<TransportDescription>();
+    tdesc->mid = mid;
+    tdesc->ice_ufrag = ice_param.ice_ufrag;
+    tdesc->ice_pwd = ice_param.ice_pwd;
+
+    if (certificate) {
+        tdesc->identify_fingerprint = rtc::SSLFingerprint::CreateFromCertificate(*certificate);
+        if (!tdesc->identify_fingerprint) {
+            RTC_LOG(LS_WARNING) << "get fingerprint failed";
+            return false;
+        }
+    }
+
+    _transport_infos.push_back(tdesc);
+
+    return true;
+}
+
+std::shared_ptr<TransportDescription> SessionDescription::get_transport_info(const std::string& mid) {
+    for (auto tdesc : _transport_infos) {
+        if (tdesc->mid == mid) {
+            return tdesc;
+        }
+    }
+
+    return nullptr;
+}
 
 static void add_rtcp_fb_line(std::shared_ptr<CodecInfo> codec, std::stringstream& ss) {
     for (auto param : codec->feedback_param) {
@@ -158,8 +190,20 @@ std::string SessionDescription::to_string() {
         }
 
         ss << "m=" << content->mid() << " 9 " << k_media_protocol_dtls_savpf << fmt << "\r\n";
+
         ss << "c=IN IP4 0.0.0.0\r\n";
         ss << "a=rtcp:9 IN IP4 0.0.0.0\r\n";
+
+        auto transport_info = get_transport_info(content->mid());
+        if (transport_info) {
+            ss << "a=ice-ufrag:" << transport_info->ice_ufrag << "\r\n";
+            ss << "a=ice-pwd:" << transport_info->ice_pwd << "\r\n";
+
+            auto fp = transport_info->identify_fingerprint.get();
+            if (fp) {
+                ss << "a=figerprint:" << fp->algorithm << " " << fp->GetRfc4572Fingerprint() << "\r\n";
+            }
+        }
 
         ss << "a=mid:" << content->mid() << "\r\n";
         build_rtp_direction(content, ss);

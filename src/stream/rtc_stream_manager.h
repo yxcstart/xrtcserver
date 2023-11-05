@@ -1,5 +1,6 @@
 #ifndef _RTC_STREAM_MANAGER_H_
 #define _RTC_STREAM_MANAGER_H_
+#include <rtc_base/rtc_certificate.h>
 #include <string>
 #include <unordered_map>
 #include "base/event_loop.h"
@@ -13,7 +14,7 @@ public:
     ~RtcStreamManager();
 
     int create_push_stream(uint64_t uid, const std::string& stream_name, bool audio, bool video, uint32_t log_id,
-                           std::string& offer);
+                           rtc::RTCCertificate* certificate, std::string& offer);
 
     PushStream* find_push_stream(const std::string& stream_name);
 

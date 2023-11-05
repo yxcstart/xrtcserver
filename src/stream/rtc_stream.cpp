@@ -13,4 +13,7 @@ RtcStream::RtcStream(EventLoop* el, uint64_t uid, const std::string& stream_name
       pc(new PeerConnection(el)) {}
 
 RtcStream::~RtcStream() {}
+
+int RtcStream::start(rtc::RTCCertificate* certificate) { return pc->init(certificate); }
+
 }  // namespace xrtc

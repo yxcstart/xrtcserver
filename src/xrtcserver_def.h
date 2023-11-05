@@ -23,6 +23,7 @@ struct RtcMsg {
     int fd = 0;
     std::string sdp;
     int err_no = 0;
+    void* certificate = nullptr;
 };
 
 }  // namespace xrtc
