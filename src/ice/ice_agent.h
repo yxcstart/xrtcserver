@@ -16,6 +16,8 @@ public:
 
     IceTransportChannel* get_channel(const std::string& transport_name, IceCandidateComponent component);
 
+    void gathering_candidate();
+
 private:
     std::vector<IceTransportChannel*>::iterator _get_channel(const std::string& transport_name,
                                                              IceCandidateComponent component);

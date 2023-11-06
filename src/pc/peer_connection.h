@@ -6,6 +6,7 @@
 #include <memory>
 #include "base/event_loop.h"
 #include "pc/session_description.h"
+#include "pc/transport_controller.h"
 
 namespace xrtc {
 
@@ -31,6 +32,7 @@ private:
     EventLoop* _el;
     std::unique_ptr<SessionDescription> _local_desc;
     rtc::RTCCertificate* _certificate = nullptr;
+    std::unique_ptr<TransportController> _transport_controller;
 };
 
 }  // namespace xrtc

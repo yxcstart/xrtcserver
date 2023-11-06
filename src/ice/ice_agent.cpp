@@ -1,4 +1,4 @@
-#include "ice_agent.h"
+#include "ice/ice_agent.h"
 #include <algorithm>
 
 namespace xrtc {
@@ -26,6 +26,12 @@ std::vector<IceTransportChannel*>::iterator IceAgent::_get_channel(const std::st
     return std::find_if(_channels.begin(), _channels.end(), [transport_name, component](IceTransportChannel* channel) {
         return transport_name == channel->transport_name() && component == channel->component();
     });
+}
+
+void IceAgent::gathering_candidate() {
+    for (auto channel : _channels) {
+        channel->gathering_candidate();
+    }
 }
 
 }  // namespace xrtc

@@ -108,6 +108,9 @@ public:
     bool add_transport_info(const std::string& mid, const IceParameters& ice_param, rtc::RTCCertificate* certificate);
     std::shared_ptr<TransportDescription> get_transport_info(const std::string& mid);
 
+    bool is_bundle(const std::string& mid);
+    std::string get_first_bundle_mid();
+
     std::string to_string();
 
 private:
