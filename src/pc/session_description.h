@@ -77,12 +77,21 @@ private:
     std::vector<std::string> _content_names;
 };
 
+enum ConnectionRole {
+    NONE = 0,
+    ACTIVE,
+    PASSIVE,
+    ACTPASS,
+    HOLDCONN,
+};
+
 class TransportDescription {
 public:
     std::string mid;
     std::string ice_ufrag;
     std::string ice_pwd;
     std::unique_ptr<rtc::SSLFingerprint> identify_fingerprint;
+    ConnectionRole connection_role = ConnectionRole::NONE;
 };
 
 class SessionDescription {

@@ -72,6 +72,21 @@ SessionDescription::SessionDescription(SdpType type) : _sdp_type(type) {}
 
 SessionDescription::~SessionDescription() {}
 
+static std::string connection_role_to_string(ConnectionRole role) {
+    switch (role) {
+        case ConnectionRole::ACTIVE:
+            return "active";
+        case ConnectionRole::PASSIVE:
+            return "passive";
+        case ConnectionRole::ACTPASS:
+            return "actpass";
+        case ConnectionRole::HOLDCONN:
+            return "holdconn";
+        default:
+            return "none";
+    }
+}
+
 bool SessionDescription::add_transport_info(const std::string& mid, const IceParameters& ice_param,
                                             rtc::RTCCertificate* certificate) {
     auto tdesc = std::make_shared<TransportDescription>();
@@ -85,6 +100,12 @@ bool SessionDescription::add_transport_info(const std::string& mid, const IcePar
             RTC_LOG(LS_WARNING) << "get fingerprint failed";
             return false;
         }
+    }
+
+    if (SdpType::k_offer == _sdp_type) {
+        tdesc->connection_role = ConnectionRole::ACTPASS;
+    } else {
+        tdesc->connection_role = ConnectionRole::ACTIVE;
     }
 
     _transport_infos.push_back(tdesc);
@@ -202,6 +223,7 @@ std::string SessionDescription::to_string() {
             auto fp = transport_info->identify_fingerprint.get();
             if (fp) {
                 ss << "a=figerprint:" << fp->algorithm << " " << fp->GetRfc4572Fingerprint() << "\r\n";
+                ss << "a=setup:" << connection_role_to_string(transport_info->connection_role) << "\r\n";
             }
         }
 

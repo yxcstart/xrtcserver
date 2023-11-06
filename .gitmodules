@@ -9,7 +9,3 @@
 [submodule "third_party/src/jsoncpp"]
 	path = third_party/src/jsoncpp
 	url = https://github.com/open-source-parsers/jsoncpp.git
-
-[submodule "third_party/src/openssl"]
-	path = third_party/src/openssl
-	url = https://github.com/openssl/openssl.git
