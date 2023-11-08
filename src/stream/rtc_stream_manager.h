@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include "base/event_loop.h"
+#include "ice/port_allocator.h"
 #include "stream/push_stream.h"
 
 namespace xrtc {
@@ -21,6 +22,7 @@ public:
 private:
     EventLoop* _el;
     std::unordered_map<std::string, PushStream*> _push_streams;
+    std::unique_ptr<PortAllocator> _allocator;
 };
 
 }  // namespace xrtc

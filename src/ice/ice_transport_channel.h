@@ -4,12 +4,13 @@
 #include <string>
 #include <vector>
 #include "base/event_loop.h"
+#include "ice/port_allocator.h"
 #include "ice_def.h"
-
 namespace xrtc {
 class IceTransportChannel {
 public:
-    IceTransportChannel(EventLoop* el, const std::string& transport_name, IceCandidateComponent component);
+    IceTransportChannel(EventLoop* el, PortAllocator* allocator, const std::string& transport_name,
+                        IceCandidateComponent component);
     virtual ~IceTransportChannel();
 
     std::string transport_name() { return _transport_name; }

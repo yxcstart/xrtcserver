@@ -8,7 +8,7 @@ namespace xrtc {
 
 class TransportController {
 public:
-    TransportController(EventLoop* el);
+    TransportController(EventLoop* el, PortAllocator* allocator);
     ~TransportController();
 
     int set_local_description(SessionDescription* desc);

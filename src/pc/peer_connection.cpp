@@ -16,7 +16,8 @@ static RtpDirection get_direction(bool send, bool recv) {
     }
 }
 
-PeerConnection::PeerConnection(EventLoop* el) : _el(el), _transport_controller(new TransportController(el)) {}
+PeerConnection::PeerConnection(EventLoop* el, PortAllocator* allocator)
+    : _el(el), _transport_controller(new TransportController(el, allocator)) {}
 PeerConnection::~PeerConnection() {}
 
 int PeerConnection::init(rtc::RTCCertificate* certificate) {

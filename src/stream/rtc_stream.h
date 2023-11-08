@@ -11,7 +11,8 @@ namespace xrtc {
 
 class RtcStream {
 public:
-    RtcStream(EventLoop* el, uint64_t uid, const std::string& stream_name, bool audio, bool video, uint32_t log_id);
+    RtcStream(EventLoop* el, PortAllocator* allocator, uint64_t uid, const std::string& stream_name, bool audio,
+              bool video, uint32_t log_id);
     // 必须定义为虚析构，否则删除父类指针，子类无法析构释放，造成内存泄露
     virtual ~RtcStream();
 
