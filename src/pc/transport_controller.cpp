@@ -20,6 +20,10 @@ int TransportController::set_local_description(SessionDescription* desc) {
             continue;
         }
         _ice_agent->create_channel(_el, mid, IceCandidateComponent::RTP);
+        auto td = desc->get_transport_info(mid);
+        if (td) {
+            _ice_agent->set_ice_params(mid, IceCandidateComponent::RTP, IceParameters(td->ice_ufrag, td->ice_pwd));
+        }
     }
 
     _ice_agent->gathering_candidate();
