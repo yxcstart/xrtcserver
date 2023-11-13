@@ -7,6 +7,7 @@
 #include "ice/candidate.h"
 #include "ice/ice_credentials.h"
 #include "ice/ice_def.h"
+#include "rtc_base/socket_address.h"
 
 namespace xrtc {
 
@@ -15,13 +16,15 @@ public:
     UDPPort(EventLoop* el, const std::string& transport_name, IceCandidateComponent compoent, IceParameters ice_params);
     ~UDPPort();
 
-    int create_ice_candidate(Network* network, Candidate& c);
+    int create_ice_candidate(Network* network, int min_port, int max_port, Candidate& c);
 
 private:
     EventLoop* _el;
     std::string _transport_name;
     IceCandidateComponent _component;
     IceParameters _ice_params;
+    int _socket = -1;
+    rtc::SocketAddress _local_addr;
 };
 
 }  // namespace xrtc

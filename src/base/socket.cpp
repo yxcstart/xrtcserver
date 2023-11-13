@@ -55,6 +55,15 @@ int create_tcp_server(const char* addr, int port) {
     return sock;
 }
 
+int create_udp_socket(int famliy) {
+    int sock = socket(famliy, SOCK_DGRAM, 0);
+    if (-1 == sock) {
+        RTC_LOG(LS_WARNING) << "create udp socket error: " << strerror(errno) << ", errno: " << errno;
+        return -1;
+    }
+    return sock;
+}
+
 int generic_accept(int sock, struct sockaddr* sa, socklen_t* len) {
     int fd = -1;
     while (1) {
@@ -168,6 +177,43 @@ int sock_write_data(int sock, const char* buf, size_t len) {
         }
     }
     return nwritten;
+}
+
+int sock_bind(int sock, struct sockaddr* addr, socklen_t len, int min_port, int max_port) {
+    int ret = -1;
+    if (0 == min_port && 0 == max_port) {
+        ret = bind(sock, addr, len);
+    } else {
+        struct sockaddr_in* addr_in = (struct sockaddr_in*)addr;
+        for (int port = min_port; port <= max_port && ret != 0; ++port) {
+            addr_in->sin_port = htons(port);
+            ret = bind(sock, addr, len);
+        }
+    }
+    if (ret != 0) {
+        RTC_LOG(LS_WARNING) << "bind error: " << strerror(errno) << ", errno: " << errno;
+    }
+
+    return ret;
+}
+
+int sock_get_address(int sock, char* ip, int* port) {
+    struct sockaddr_in addr_in;
+    socklen_t len = sizeof(sockaddr);
+    int ret = getsockname(sock, (struct sockaddr*)&addr_in, &len);
+    if (ret != 0) {
+        RTC_LOG(LS_WARNING) << "getsockname error: " << strerror(errno) << ", errno: " << errno;
+        return -1;
+    }
+    if (ip) {
+        strcpy(ip, inet_ntoa(addr_in.sin_addr));
+    }
+
+    if (port) {
+        *port = ntohs(addr_in.sin_port);
+    }
+
+    return 0;
 }
 
 }  // namespace xrtc
