@@ -2,6 +2,7 @@
 #define __UDP_PORT_H_
 
 #include <string>
+#include <vector>
 #include "base/event_loop.h"
 #include "base/network.h"
 #include "ice/candidate.h"
@@ -25,6 +26,7 @@ private:
     IceParameters _ice_params;
     int _socket = -1;
     rtc::SocketAddress _local_addr;
+    std::vector<Candidate> _candidates;
 };
 
 }  // namespace xrtc
