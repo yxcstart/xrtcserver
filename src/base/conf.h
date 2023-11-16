@@ -12,6 +12,7 @@ struct Generalconf {
     bool log_to_stderr;
     int ice_min_port = 0;
     int ice_max_port = 0;
+    std::string server_addr;
 };
 
 int load_general_conf(const char *filename, Generalconf *conf);

@@ -1,7 +1,8 @@
 #include "pc/session_description.h"
 #include <rtc_base/logging.h>
 #include <sstream>
-
+#include "base/conf.h"
+extern xrtc::Generalconf* g_conf;
 namespace xrtc {
 
 const char k_media_protocol_dtls_savpf[] = "UDP/TLS/RTP/SAVPF";
@@ -200,6 +201,23 @@ static void build_rtp_direction(std::shared_ptr<MediaContentDescription> content
     }
 }
 
+static void build_candidate(std::shared_ptr<MediaContentDescription> content, std::stringstream& ss) {
+    bool flag = false;
+    for (auto c : content->candidates()) {
+        if (rtc::IPIsPrivateNetwork(c.address.ipaddr()) && flag) {
+            continue;
+        }
+        ss << "a=candidate:" << c.foundation << " " << c.component << " " << c.priority;
+        if (rtc::IPIsPrivateNetwork(c.address.ipaddr())) {
+            ss << " " << g_conf->server_addr;
+            flag = true;
+        } else {
+            ss << " " << c.address.HostAsURIString();
+        }
+        ss << " " << c.port << " typ " << c.type << "\r\n";
+    }
+}
+
 std::string SessionDescription::to_string() {
     std::stringstream ss;
     ss << "v=0\r\n";
@@ -240,6 +258,8 @@ std::string SessionDescription::to_string() {
         ss << "c=IN IP4 0.0.0.0\r\n";
         ss << "a=rtcp:9 IN IP4 0.0.0.0\r\n";
 
+        build_candidate(content, ss);
+
         auto transport_info = get_transport_info(content->mid());
         if (transport_info) {
             ss << "a=ice-ufrag:" << transport_info->ice_ufrag << "\r\n";
@@ -263,6 +283,15 @@ std::string SessionDescription::to_string() {
     }
 
     return ss.str();
+}
+
+std::shared_ptr<MediaContentDescription> SessionDescription::get_content(const std::string& mid) {
+    for (auto content : _contents) {
+        if (mid == content->mid()) {
+            return content;
+        }
+    }
+    return nullptr;
 }
 
 void SessionDescription::add_content(std::shared_ptr<MediaContentDescription> content) { _contents.push_back(content); }

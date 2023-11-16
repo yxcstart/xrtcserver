@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "ice/candidate.h"
 #include "ice/ice_credentials.h"
 #include "pc/codec_info.h"
 
@@ -42,10 +43,14 @@ public:
     bool rtcp_mux() { return _rtcp_mux; }
     void set_rtcp_mux(bool mux) { _rtcp_mux = mux; }
 
+    const std::vector<Candidate>& candidates() { return _cadidates; }
+    void add_candidates(const std::vector<Candidate>& candidates) { _cadidates = candidates; }
+
 protected:
     std::vector<std::shared_ptr<CodecInfo>> _codecs;
     RtpDirection _direction;
     bool _rtcp_mux = true;
+    std::vector<Candidate> _cadidates;
 };
 
 class AudioContentDescription : public MediaContentDescription {
@@ -99,6 +104,7 @@ public:
     SessionDescription(SdpType type);
     ~SessionDescription();
 
+    std::shared_ptr<MediaContentDescription> get_content(const std::string& mid);
     void add_content(std::shared_ptr<MediaContentDescription> content);
     const std::vector<std::shared_ptr<MediaContentDescription>>& contents() const { return _contents; }
 

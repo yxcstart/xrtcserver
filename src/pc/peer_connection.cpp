@@ -17,8 +17,25 @@ static RtpDirection get_direction(bool send, bool recv) {
 }
 
 PeerConnection::PeerConnection(EventLoop* el, PortAllocator* allocator)
-    : _el(el), _transport_controller(new TransportController(el, allocator)) {}
+    : _el(el), _transport_controller(new TransportController(el, allocator)) {
+    _transport_controller->signal_candidate_allocate_done.connect(this, &PeerConnection::on_candidate_allocate_done);
+}
 PeerConnection::~PeerConnection() {}
+
+void PeerConnection::on_candidate_allocate_done(TransportController* transport_controller,
+                                                const std::string& transport_name, IceCandidateComponent component,
+                                                const std::vector<Candidate>& candidates) {
+    for (auto c : candidates) {
+        RTC_LOG(LS_INFO) << "candidate gathered, transport_name: " << transport_name << ", " << c.to_string();
+    }
+
+    if (!_local_desc) {
+        return;
+    }
+
+    auto content = _local_desc->get_content(transport_name);
+    content->add_candidates(candidates);
+}
 
 int PeerConnection::init(rtc::RTCCertificate* certificate) {
     _certificate = certificate;

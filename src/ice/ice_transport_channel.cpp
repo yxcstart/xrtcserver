@@ -38,6 +38,12 @@ void IceTransportChannel::gathering_candidate() {
         UDPPort* port = new UDPPort(_el, _transport_name, _component, _ice_params);
         Candidate c;
         int ret = port->create_ice_candidate(network, _allocator->min_port(), _allocator->max_port(), c);
+        if (ret != 0) {
+            continue;
+        }
+        _local_candidates.push_back(c);
     }
+
+    signal_candidate_allocate_done(this, _local_candidates);
 }
 }  // namespace xrtc
