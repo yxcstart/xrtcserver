@@ -34,7 +34,9 @@ void PeerConnection::on_candidate_allocate_done(TransportController* transport_c
     }
 
     auto content = _local_desc->get_content(transport_name);
-    content->add_candidates(candidates);
+    if (content) {
+        content->add_candidates(candidates);
+    }
 }
 
 int PeerConnection::init(rtc::RTCCertificate* certificate) {
@@ -82,6 +84,11 @@ std::string PeerConnection::create_offer(const RTCOfferAnswerOptions& options) {
     _transport_controller->set_local_description(_local_desc.get());
 
     return _local_desc->to_string();
+}
+int PeerConnection::set_remote_sdp(const std::string& sdp) {
+    RTC_LOG(LS_WARNING) << "==============pc set remote sdp\n" << sdp;
+
+    return 0;
 }
 
 }  // namespace xrtc

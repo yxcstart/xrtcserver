@@ -42,7 +42,7 @@ VideoContentDescription::VideoContentDescription() {
     // add codec param
     codec->codec_param["level-asymmetry-allowed"] = "1";
     codec->codec_param["packetization-mode"] = "1";
-    codec->codec_param["profile-level-id"] = "42e01";
+    codec->codec_param["profile-level-id"] = "42e01f";
 
     auto rtx_codec = std::make_shared<VideoCodecInfo>();
     rtx_codec->id = 99;
@@ -207,7 +207,7 @@ static void build_candidate(std::shared_ptr<MediaContentDescription> content, st
         if (rtc::IPIsPrivateNetwork(c.address.ipaddr()) && flag) {
             continue;
         }
-        ss << "a=candidate:" << c.foundation << " " << c.component << " " << c.priority;
+        ss << "a=candidate:" << c.foundation << " " << c.component << " " << c.protocol << " " << c.priority;
         if (rtc::IPIsPrivateNetwork(c.address.ipaddr())) {
             ss << " " << g_conf->server_addr;
             flag = true;
@@ -267,7 +267,7 @@ std::string SessionDescription::to_string() {
 
             auto fp = transport_info->identify_fingerprint.get();
             if (fp) {
-                ss << "a=figerprint:" << fp->algorithm << " " << fp->GetRfc4572Fingerprint() << "\r\n";
+                ss << "a=fingerprint:" << fp->algorithm << " " << fp->GetRfc4572Fingerprint() << "\r\n";
                 ss << "a=setup:" << connection_role_to_string(transport_info->connection_role) << "\r\n";
             }
         }

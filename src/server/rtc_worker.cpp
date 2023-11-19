@@ -124,11 +124,20 @@ void RtcWorker::_process_rtc_msg() {
         case CMDNO_PUSH:
             _process_push(msg);
             break;
-
+        case CMDNO_ANSWER:
+            _process_answer(msg);
+            break;
         default:
             RTC_LOG(LS_WARNING) << "unknown cmdno: " << msg->cmdno << ", log_id: " << msg->log_id;
             break;
     }
+}
+
+void RtcWorker::_process_answer(std::shared_ptr<RtcMsg> msg) {
+    int ret = _rtc_stream_mgr->set_answer(msg->uid, msg->stream_name, msg->sdp, msg->stream_type, msg->log_id);
+
+    RTC_LOG(LS_INFO) << "rtc worker process answer, uid: " << msg->uid << ", stream_name: " << msg->stream_name
+                     << ", worker_id: " << _worker_id << ", log_id: " << msg->log_id << ", ret: " << ret;
 }
 
 void RtcWorker::_process_push(std::shared_ptr<RtcMsg> msg) {

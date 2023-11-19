@@ -22,7 +22,7 @@ uint32_t Candidate::get_priority(uint32_t type_preference, int network_adapter_p
 std::string Candidate::to_string() const {
     std::stringstream ss;
     ss << "Cand[" << foundation << ":" << (int)component << ":" << protocol << ":" << priority << ":"
-       << address.ToString() << ":" << type << ":" << username << ":" << password;
+       << address.ToString() << ":" << type << ":" << username << ":" << password << "]";
     return ss.str();
 }
 

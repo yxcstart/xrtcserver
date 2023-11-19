@@ -27,6 +27,7 @@ public:
 
     int init(rtc::RTCCertificate* certificate);
     std::string create_offer(const RTCOfferAnswerOptions& options);
+    int set_remote_sdp(const std::string& sdp);
 
 private:
     void on_candidate_allocate_done(TransportController* transport_controller, const std::string& transport_name,

@@ -16,4 +16,6 @@ RtcStream::~RtcStream() {}
 
 int RtcStream::start(rtc::RTCCertificate* certificate) { return pc->init(certificate); }
 
+int RtcStream::set_remote_sdp(const std::string& sdp) { return pc->set_remote_sdp(sdp); }
+
 }  // namespace xrtc
