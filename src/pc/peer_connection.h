@@ -36,6 +36,7 @@ private:
 private:
     EventLoop* _el;
     std::unique_ptr<SessionDescription> _local_desc;
+    std::unique_ptr<SessionDescription> _remote_desc;
     rtc::RTCCertificate* _certificate = nullptr;
     std::unique_ptr<TransportController> _transport_controller;
 };

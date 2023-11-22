@@ -138,6 +138,9 @@ bool SessionDescription::add_transport_info(const std::string& mid, const IcePar
 
     return true;
 }
+bool SessionDescription::add_transport_info(std::shared_ptr<TransportDescription> td) {
+    _transport_infos.push_back(td);
+}
 
 std::shared_ptr<TransportDescription> SessionDescription::get_transport_info(const std::string& mid) {
     for (auto tdesc : _transport_infos) {
