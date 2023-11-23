@@ -41,6 +41,14 @@ void IceAgent::set_ice_params(const std::string& transport_name, IceCandidateCom
     }
 }
 
+void IceAgent::set_remote_ice_params(const std::string& transport_name, IceCandidateComponent component,
+                                     const IceParameters& ice_params) {
+    auto channel = get_channel(transport_name, component);
+    if (channel) {
+        channel->set_remote_ice_params(ice_params);
+    }
+}
+
 void IceAgent::gathering_candidate() {
     for (auto channel : _channels) {
         channel->gathering_candidate();
