@@ -82,6 +82,13 @@ bool UDPPort::get_stun_message(const char* data, size_t len, std::unique_ptr<Stu
         return false;
     }
 
+    if (STUN_BINDING_REQUEST == stun_msg->type()) {
+        if (!stun_msg->get_byte_string(STUN_ATTR_USERNAME) || !stun_msg->get_byte_string(STUN_ATTR_MESSAGE_INTEGRITY)) {
+            // todo 发送错误响应
+            return true;
+        }
+    }
+
     return true;
 }
 
