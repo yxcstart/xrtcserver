@@ -87,7 +87,39 @@ bool UDPPort::get_stun_message(const char* data, size_t len, std::unique_ptr<Stu
             // todo 发送错误响应
             return true;
         }
+
+        std::string local_ufrag;
+        std::string remote_ufrag;
+
+        if (!_parse_stun_username(stun_msg.get(), &local_ufrag, &remote_ufrag) ||
+            local_ufrag != _ice_params.ice_ufrag) {
+            // todo 发送错误响应
+            return true;
+        }
     }
+
+    return true;
+}
+
+bool UDPPort::_parse_stun_username(StunMessage* stun_msg, std::string* local_ufrag, std::string* remote_ufrag) {
+    local_ufrag->clear();
+    remote_ufrag->clear();
+
+    const StunByteStringAttribute* attr = stun_msg->get_byte_string(STUN_ATTR_USERNAME);
+    if (!attr) {
+        return false;
+    }
+
+    std::string username = attr->get_string();
+    std::vector<std::string> fields;
+    rtc::split(username, ':', &fields);
+    if (fields.size() != 2) {
+        return false;
+    }
+
+    *local_ufrag = fields[0];
+    *remote_ufrag = fields[1];
+    RTC_LOG(LS_WARNING) << "local_ufrag: " << *local_ufrag << ", remote_ufrag: " << *remote_ufrag;
 
     return true;
 }

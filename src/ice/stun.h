@@ -39,8 +39,8 @@ public:
     StunMessage();
     ~StunMessage();
 
-    int type() { return _type; }
-    size_t length() { return _length; }
+    int type() const { return _type; }
+    size_t length() const { return _length; }
 
     static bool validate_fingerprint(const char* data, size_t len);
     StunAttributeValueType get_attribute_value_type(int type);
@@ -63,8 +63,8 @@ class StunAttribute {
 public:
     virtual ~StunAttribute();  // 父类析构，析构具体子类
 
-    int type() { return _type; }
-    size_t length() { return _length; }
+    int type() const { return _type; }
+    size_t length() const { return _length; }
 
     static StunAttribute* create(StunAttributeValueType value_type, uint16_t type, uint16_t length, void* owner);
     virtual bool read(rtc::ByteBufferReader* buf) = 0;
@@ -89,6 +89,7 @@ public:
     ~StunByteStringAttribute() override;
 
     bool read(rtc::ByteBufferReader* buf) override;
+    std::string get_string() const { return std::string(_bytes, length()); }
 
 private:
     char* _bytes = nullptr;

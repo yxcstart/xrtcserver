@@ -111,7 +111,7 @@ bool StunMessage::read(rtc::ByteBufferReader* buf) {
 
 StunAttribute* StunMessage::_create_attribute(uint16_t type, uint16_t length) {
     StunAttributeValueType value_type = get_attribute_value_type(type);
-    if (STUN_VALUE_BYTE_STRING == value_type) {
+    if (STUN_VALUE_UNKNOWN != value_type) {
         return StunAttribute::create(value_type, type, length, this);
     }
     return nullptr;
