@@ -10,3 +10,4 @@ ice:
   max_port: 65535
 
 server_addr: 159.75.221.241
+if_name: eth0

@@ -25,6 +25,7 @@ int load_general_conf(const char *filename, Generalconf *conf) {
         conf->ice_min_port = config["ice"]["min_port"].as<int>();
         conf->ice_max_port = config["ice"]["max_port"].as<int>();
         conf->server_addr = config["server_addr"].as<std::string>();
+        conf->if_name = config["if_name"].as<std::string>();
     } catch (YAML::Exception &e) {
         fprintf(stderr, "catch a YAML::Exception, line: %d, column: %d, error:%s\n", e.mark.line + 1, e.mark.column + 1,
                 e.msg.c_str());

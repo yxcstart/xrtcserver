@@ -1,9 +1,12 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <linux/sockios.h>
 #include <netinet/tcp.h>
 #include <rtc_base/logging.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
 namespace xrtc {
 
 int create_tcp_server(const char* addr, int port) {
@@ -214,6 +217,33 @@ int sock_get_address(int sock, char* ip, int* port) {
     }
 
     return 0;
+}
+
+int sock_recv_from(int sock, char* buf, size_t size, struct sockaddr* addr, socklen_t addr_len) {
+    int received = recvfrom(sock, buf, size, 0, addr, &addr_len);
+    if (received < 0) {
+        if (EAGAIN == errno) {
+            received = 0;
+        } else {
+            RTC_LOG(LS_WARNING) << "recv from error: " << strerror(errno) << ", errno: " << errno;
+            return -1;
+        }
+    } else if (0 == received) {
+        RTC_LOG(LS_WARNING) << "recv from error: " << strerror(errno) << ", errno: " << errno;
+        return -1;
+    }
+
+    return received;
+}
+
+int64_t sock_get_recv_timestamp(int sock) {
+    struct timeval time;
+    int ret = ioctl(sock, SIOCGSTAMP, &time);
+    if (ret != 0) {
+        return -1;
+    }
+
+    return time.tv_sec * 1000000 + time.tv_usec;
 }
 
 }  // namespace xrtc

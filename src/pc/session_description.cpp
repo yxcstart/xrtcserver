@@ -207,9 +207,9 @@ static void build_rtp_direction(std::shared_ptr<MediaContentDescription> content
 static void build_candidate(std::shared_ptr<MediaContentDescription> content, std::stringstream& ss) {
     bool flag = false;
     for (auto c : content->candidates()) {
-        if (rtc::IPIsPrivateNetwork(c.address.ipaddr()) && flag) {
-            continue;
-        }
+        // if (rtc::IPIsPrivateNetwork(c.address.ipaddr()) && flag) {
+        //     continue;
+        // }
         ss << "a=candidate:" << c.foundation << " " << c.component << " " << c.protocol << " " << c.priority;
         if (rtc::IPIsPrivateNetwork(c.address.ipaddr())) {
             ss << " " << g_conf->server_addr;
