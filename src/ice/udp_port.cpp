@@ -18,11 +18,6 @@ std::string compute_foundation(const std::string& type, const std::string& proto
     return std::to_string(rtc::ComputeCrc32(ss.str()));
 }
 
-void UDPPort::_on_read_packet(AsyncUdpSocket* socket, char* buf, size_t size, const rtc::SocketAddress& addr,
-                              int64_t ts) {
-    RTC_LOG(LS_WARNING) << "===========remote addr: " << addr.ToString();
-}
-
 int UDPPort::create_ice_candidate(Network* network, int min_port, int max_port, Candidate& c) {
     _socket = create_udp_socket(network->ip().family());
     if (_socket < 0) {
@@ -66,6 +61,22 @@ int UDPPort::create_ice_candidate(Network* network, int min_port, int max_port, 
 
     _candidates.push_back(c);
     return 0;
+}
+
+void UDPPort::_on_read_packet(AsyncUdpSocket* socket, char* buf, size_t size, const rtc::SocketAddress& addr,
+                              int64_t ts) {
+    RTC_LOG(LS_WARNING) << "===========remote addr: " << addr.ToString();
+    std::unique_ptr<StunMessage> stun_msg;
+    bool res = get_stun_message(buf, size, &stun_msg);
+    RTC_LOG(LS_WARNING) << "========res: " << res;
+}
+
+bool UDPPort::get_stun_message(const char* buf, size_t len, std::unique_ptr<StunMessage>* out_msg) {
+    if (!StunMessage::validate_fingerprint(buf, len)) {
+        return false;
+    }
+
+    return true;
 }
 
 }  // namespace xrtc
