@@ -34,4 +34,81 @@ bool StunMessage::validate_fingerprint(const char* data, size_t len) {
     return (fingerprint ^ STUN_FINGERPRINT_XOR_VALUE) == rtc::ComputeCrc32(data, len - fingerprint_attr_size);
 }
 
+bool StunMessage::read(rtc::ByteBufferReader* buf) {
+    if (!buf) {
+        return false;
+    }
+
+    if (!buf->ReadUInt16(&_type)) {
+        return false;
+    }
+
+    // rtp/rtcp 10(2)
+    if (_type & 0x0800) {
+        return false;
+    }
+
+    // stun message 的总长度（不包含头部）
+    if (!buf->ReadUInt16(&_length)) {
+        return false;
+    }
+
+    std::string magic_cookie;
+    // 读4字节
+    if (!buf->ReadString(&magic_cookie, k_stun_magic_cookie_length)) {
+        return false;
+    }
+
+    std::string transaction_id;
+    // 读12字节
+    if (!buf->ReadString(&transaction_id, k_stun_transaction_id_length)) {
+        return false;
+    }
+
+    uint32_t magic_cookie_int;
+    memcpy(&magic_cookie_int, magic_cookie.data(), sizeof(magic_cookie_int));
+    // RFC3489老规范没有magic_cookie，而是和transaction_id一起共16字节
+    if (rtc::NetworkToHost32(magic_cookie_int) != k_stun_magic_cookie) {
+        transaction_id.insert(0, magic_cookie);
+    }
+
+    _transaction_id = transaction_id;
+
+    if (buf->Length() != _length) {
+        return false;
+    }
+
+    _attrs.resize(0);
+    while (buf->Length() > 0) {
+        uint16_t attr_type;
+        uint16_t attr_length;
+        if (!buf->ReadUInt16(&attr_type)) {
+            return false;
+        }
+        if (!buf->ReadUInt16(&attr_length)) {
+            return false;
+        }
+
+        std::unique_ptr<StunAttribute> attr = _create_attribute(attr_type, attr_length);
+        if (!attr) {
+            if (attr_length % 4 != 0) {
+                attr_length += (4 - (attr_length % 4));
+            }
+
+            if (!buf->Consume(attr_length)) {
+                return false;
+            }
+        } else {
+            if (!attr->read(buf)) {
+                return false;
+            }
+            _attrs.push_back(std::move(attr));
+        }
+    }
+
+    return true;
+}
+
+std::unique_ptr<StunAttribute> StunMessage::_create_attribute(uint16_t type, uint16_t length) { return nullptr; }
+
 }  // namespace xrtc
