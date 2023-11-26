@@ -32,8 +32,18 @@ enum StunAttributeValueType {
     STUN_VALUE_BYTE_STRING,
 };
 
+enum StunErrorCode {
+    STUN_ERROR_BAD_REQUEST = 400,
+    STUN_ERROR_UNATHORIZED = 401,
+};
+
+extern const char STUN_ERROR_REASON_BAD_QEQUEST[];
+extern const char STUN_ERROR_REASON_UNATHORIZED[];
+
 class StunAttribute;
 class StunByteStringAttribute;
+
+std::string stun_method_to_string(int type);
 
 class StunMessage {
 public:

@@ -7,6 +7,17 @@ namespace xrtc {
 
 const char EMPTY_TRANSACTION_ID[] = "000000000000";
 const size_t STUN_FINGERPRINT_XOR_VALUE = 0x5354554e;
+const char STUN_ERROR_REASON_BAD_QEQUEST[] = "Bad request";
+const char STUN_ERROR_REASON_UNATHORIZED[] = "Unathorized";
+
+std::string stun_method_to_string(int type) {
+    switch (type) {
+        case STUN_BINDING_REQUEST:
+            return "BINDING REQUEST";
+        default:
+            return "Unknown<" + std::to_string(type) + ">";
+    }
+}
 
 StunMessage::StunMessage() : _type(0), _length(0), _transaction_id(EMPTY_TRANSACTION_ID) {}
 StunMessage::~StunMessage() = default;
