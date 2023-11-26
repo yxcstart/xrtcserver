@@ -27,6 +27,8 @@ public:
                                      const std::string& reason);
     std::string to_string();
 
+    sigslot::signal4<UDPPort*, const rtc::SocketAddress&, StunMessage*, const std::string&> signal_unknown_address;
+
 private:
     void _on_read_packet(AsyncUdpSocket* socket, char* buf, size_t size, const rtc::SocketAddress& addr, int64_t ts);
     bool _parse_stun_username(StunMessage* stun_msg, std::string* local_ufrag, std::string* remote_ufrag);

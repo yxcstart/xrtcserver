@@ -210,9 +210,15 @@ StunAttributeValueType StunMessage::get_attribute_value_type(int type) {
             return STUN_VALUE_BYTE_STRING;
         case STUN_ATTR_MESSAGE_INTEGRITY:
             return STUN_VALUE_BYTE_STRING;
+        case STUN_ATTR_PRIORITY:
+            return STUN_VALUE_UINT32;
         default:
             return STUN_VALUE_UNKNOWN;
     }
+}
+
+const StunUInt32Attribute* StunMessage::get_uint32(uint16_t type) {
+    return static_cast<const StunUInt32Attribute*>(_get_attribute(type));
 }
 
 const StunByteStringAttribute* StunMessage::get_byte_string(uint16_t type) {
@@ -236,6 +242,9 @@ StunAttribute* StunAttribute::create(StunAttributeValueType value_type, uint16_t
     switch (value_type) {
         case STUN_VALUE_BYTE_STRING:
             return new StunByteStringAttribute(type, length);
+
+        case STUN_VALUE_UINT32:
+            return new StunUInt32Attribute(type);
         default:
             return nullptr;
     }
@@ -248,6 +257,19 @@ void StunAttribute::consume_padding(rtc::ByteBufferReader* buf) {
     }
 }
 
+// UInt32
+StunUInt32Attribute::StunUInt32Attribute(uint16_t type) : StunAttribute(type, SIZE), _bits(0) {}
+
+StunUInt32Attribute::StunUInt32Attribute(uint16_t type, uint32_t value) : StunAttribute(type, SIZE), _bits(value) {}
+
+bool StunUInt32Attribute::read(rtc::ByteBufferReader* buf) {
+    if (length() != SIZE || !buf->ReadUInt32(&_bits)) {
+        return false;
+    }
+    return true;
+}
+
+// ByteString
 StunByteStringAttribute::StunByteStringAttribute(uint16_t type, uint16_t length) : StunAttribute(type, length) {}
 
 StunByteStringAttribute::~StunByteStringAttribute() {

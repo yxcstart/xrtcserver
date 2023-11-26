@@ -65,11 +65,19 @@ int UDPPort::create_ice_candidate(Network* network, int min_port, int max_port, 
 
 void UDPPort::_on_read_packet(AsyncUdpSocket* socket, char* buf, size_t size, const rtc::SocketAddress& addr,
                               int64_t ts) {
-    RTC_LOG(LS_WARNING) << "===========remote addr: " << addr.ToString();
     std::unique_ptr<StunMessage> stun_msg;
     std::string remote_ufrag;
     bool res = get_stun_message(buf, size, addr, &stun_msg, &remote_ufrag);
-    RTC_LOG(LS_WARNING) << "========res: " << res;
+    if (!res || !stun_msg) {
+        return;
+    }
+
+    if (STUN_BINDING_REQUEST == stun_msg->type()) {
+        RTC_LOG(LS_INFO) << to_string() << ": Received " << stun_method_to_string(stun_msg->type())
+                         << " id=" << rtc::hex_encode(stun_msg->transaction_id()) << " from " << addr.ToString();
+        // 收到联通性检查之后，发送信号，设置remote candidate
+        signal_unknown_address(this, addr, stun_msg.get(), remote_ufrag);
+    }
 }
 
 bool UDPPort::get_stun_message(const char* data, size_t len, const rtc::SocketAddress& addr,
