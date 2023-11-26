@@ -96,6 +96,12 @@ bool UDPPort::get_stun_message(const char* data, size_t len, std::unique_ptr<Stu
             // todo 发送错误响应
             return true;
         }
+
+        if (stun_msg->validate_message_integrity(_ice_params.ice_pwd) !=
+            StunMessage::IntegerityStatus::k_integrity_ok) {
+            // todo 发送错误响应
+            return true;
+        }
     }
 
     return true;

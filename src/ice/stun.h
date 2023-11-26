@@ -13,6 +13,7 @@ const size_t k_stun_transaction_id_offset = 8;
 const size_t k_stun_transaction_id_length = 12;
 const uint32_t k_stun_magic_cookie = 0x2112A442;
 const size_t k_stun_magic_cookie_length = sizeof(k_stun_magic_cookie);
+const size_t k_stun_message_integrity_size = 20;
 
 enum StunMessageType {
     STUN_BINDING_REQUEST = 0x0001,
@@ -36,6 +37,13 @@ class StunByteStringAttribute;
 
 class StunMessage {
 public:
+    enum class IntegerityStatus {
+        k_not_set,
+        k_no_integrity,
+        k_integrity_ok,
+        k_integrity_bad,
+    };
+
     StunMessage();
     ~StunMessage();
 
@@ -43,6 +51,7 @@ public:
     size_t length() const { return _length; }
 
     static bool validate_fingerprint(const char* data, size_t len);
+    IntegerityStatus validate_message_integrity(const std::string& password);
     StunAttributeValueType get_attribute_value_type(int type);
     bool read(rtc::ByteBufferReader* buf);
 
@@ -51,12 +60,17 @@ public:
 private:
     StunAttribute* _create_attribute(uint16_t type, uint16_t length);
     const StunAttribute* _get_attribute(uint16_t type);
+    bool _validate_message_integrity_of_type(uint16_t mi_attr_type, size_t mi_attr_size, const char* data, size_t size,
+                                             const std::string& password);
 
 private:
     uint16_t _type;
     uint16_t _length;
     std::string _transaction_id;
     std::vector<std::unique_ptr<StunAttribute>> _attrs;
+    IntegerityStatus _integrity = IntegerityStatus::k_not_set;
+    std::string _password;
+    std::string _buffer;
 };
 
 class StunAttribute {
