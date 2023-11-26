@@ -3,7 +3,7 @@
 
 #include "base/event_loop.h"
 #include "ice/candidate.h"
-
+#include "ice/stun.h"
 namespace xrtc {
 
 class UDPPort;
@@ -14,6 +14,11 @@ public:
     ~IceConnection();
 
     const Candidate& remote_candidate() const { return _remote_candidate; }
+
+    void handle_stun_binding_request(StunMessage* stun_msg);
+    void send_stun_binding_response(StunMessage* stun_msg);
+
+    void on_read_packet(const char* buf, size_t size, int64_t ts);
 
 private:
     EventLoop* _el;

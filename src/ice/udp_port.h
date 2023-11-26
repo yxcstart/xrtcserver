@@ -14,6 +14,7 @@
 #include "ice/ice_def.h"
 #include "ice/stun.h"
 #include "rtc_base/socket_address.h"
+
 namespace xrtc {
 
 typedef std::map<rtc::SocketAddress, IceConnection*> AddressMap;
@@ -23,12 +24,17 @@ public:
     UDPPort(EventLoop* el, const std::string& transport_name, IceCandidateComponent compoent, IceParameters ice_params);
     ~UDPPort();
 
+    std::string ice_ufrag() { return _ice_params.ice_ufrag; }
+    std::string ice_pwd() { return _ice_params.ice_pwd; }
+
     int create_ice_candidate(Network* network, int min_port, int max_port, Candidate& c);
     bool get_stun_message(const char* data, size_t len, const rtc::SocketAddress& addr,
                           std::unique_ptr<StunMessage>* out_msg, std::string* out_username);
     void send_binding_error_response(StunMessage* stun_msg, const rtc::SocketAddress& addr, int err_code,
                                      const std::string& reason);
     IceConnection* create_connection(const Candidate& candidate);
+    IceConnection* get_connection(const rtc::SocketAddress& addr);
+
     std::string to_string();
 
     sigslot::signal4<UDPPort*, const rtc::SocketAddress&, StunMessage*, const std::string&> signal_unknown_address;

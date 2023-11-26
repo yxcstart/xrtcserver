@@ -119,6 +119,20 @@ bool StunMessage::_validate_message_integrity_of_type(uint16_t mi_attr_type, siz
 
     return memcmp(data + mi_pos + k_stun_attribute_header_size, hmac, mi_attr_size) == 0;
 }
+void StunMessage::add_fingerprint() {}
+
+bool StunMessage::add_message_integrity(const std::string& password) { return true; }
+
+void StunMessage::add_attribute(std::unique_ptr<StunAttribute> attr) {
+    size_t attr_len = attr->length();
+    if (attr_len % 4 != 0) {
+        attr_len += (4 - (attr_len % 4));
+    }
+
+    _length += attr_len;
+
+    _attrs.push_back(std::move(attr));
+}
 
 bool StunMessage::read(rtc::ByteBufferReader* buf) {
     if (!buf) {
@@ -257,6 +271,18 @@ void StunAttribute::consume_padding(rtc::ByteBufferReader* buf) {
         buf->Consume(4 - remain);
     }
 }
+
+// Address
+StunAddressAttribute::StunAddressAttribute(uint16_t type, const rtc::SocketAddress& addr) : StunAttribute(type, 0) {
+    // set_address(addr);
+}
+
+bool StunAddressAttribute::read(rtc::ByteBufferReader* buf) { return true; }
+
+// Xor Address
+
+StunXorAddressAttribute::StunXorAddressAttribute(uint16_t type, const rtc::SocketAddress& addr)
+    : StunAddressAttribute(type, addr) {}
 
 // UInt32
 StunUInt32Attribute::StunUInt32Attribute(uint16_t type) : StunAttribute(type, SIZE), _bits(0) {}

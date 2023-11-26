@@ -71,11 +71,23 @@ IceConnection* UDPPort::create_connection(const Candidate& candidate) {
         ret.first->second = conn;
     }
 
+    // todo 清理之前的ice connection
+
     return conn;
+}
+
+IceConnection* UDPPort::get_connection(const rtc::SocketAddress& addr) {
+    auto iter = _connections.find(addr);
+    return iter == _connections.end() ? nullptr : iter->second;
 }
 
 void UDPPort::_on_read_packet(AsyncUdpSocket* socket, char* buf, size_t size, const rtc::SocketAddress& addr,
                               int64_t ts) {
+    if (IceConnection* conn = get_connection(addr)) {
+        conn->on_read_packet(buf, size, ts);
+        return;
+    }
+
     std::unique_ptr<StunMessage> stun_msg;
     std::string remote_ufrag;
     bool res = get_stun_message(buf, size, addr, &stun_msg, &remote_ufrag);
