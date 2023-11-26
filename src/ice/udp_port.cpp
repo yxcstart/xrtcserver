@@ -62,6 +62,17 @@ int UDPPort::create_ice_candidate(Network* network, int min_port, int max_port, 
     _candidates.push_back(c);
     return 0;
 }
+IceConnection* UDPPort::create_connection(const Candidate& candidate) {
+    IceConnection* conn = new IceConnection(_el, this, candidate);
+    auto ret = _connections.insert(std::make_pair(conn->remote_candidate().address, conn));
+    if (ret.second == false && ret.first->second != conn) {
+        RTC_LOG(LS_WARNING) << to_string() << ": create ice connection on "
+                            << "an existing remote address, addr: " << conn->remote_candidate().address.ToString();
+        ret.first->second = conn;
+    }
+
+    return conn;
+}
 
 void UDPPort::_on_read_packet(AsyncUdpSocket* socket, char* buf, size_t size, const rtc::SocketAddress& addr,
                               int64_t ts) {

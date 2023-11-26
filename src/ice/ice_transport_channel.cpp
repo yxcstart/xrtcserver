@@ -74,6 +74,17 @@ void IceTransportChannel::_on_unknown_address(UDPPort* port, const rtc::SocketAd
     remote_candidate.type = PRFLX_PORT_TYPE;
 
     RTC_LOG(LS_INFO) << to_string() << ": create peer reflexive candidate: " << remote_candidate.to_string();
+
+    IceConnection* conn = port->create_connection(remote_candidate);
+    if (!conn) {
+        RTC_LOG(LS_WARNING) << to_string() << ": create connection from "
+                            << " peer reflexive candidate error, remote_addr: " << addr.ToString();
+
+        port->send_binding_error_response(msg, addr, STUN_ERROR_SERVER_ERROR, STUN_ERROR_REASON_SERVER_ERROR);
+        return;
+    }
+    RTC_LOG(LS_INFO) << to_string() << ": create connection from "
+                     << " peer reflexive candidate success, remote_addr: " << addr.ToString();
 }
 
 std::string IceTransportChannel::to_string() {
