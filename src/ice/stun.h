@@ -80,7 +80,7 @@ public:
     void set_transaction_id(const std::string& transaction_id) { _transaction_id = transaction_id; }
 
     static bool validate_fingerprint(const char* data, size_t len);
-    void add_fingerprint();
+    bool add_fingerprint();
 
     IntegerityStatus validate_message_integrity(const std::string& password);
     bool add_message_integrity(const std::string& password);
@@ -99,7 +99,7 @@ private:
     const StunAttribute* _get_attribute(uint16_t type);
     bool _validate_message_integrity_of_type(uint16_t mi_attr_type, size_t mi_attr_size, const char* data, size_t size,
                                              const std::string& password);
-    bool _add_message_integrity_of_type(uint16_t attr_type, uint16_t attr_size, const char* key, size_t len);
+    bool _add_message_integrity_of_type(uint16_t attr_type, uint16_t attr_size, const char* key, size_t key_len);
 
 private:
     uint16_t _type;
@@ -128,6 +128,7 @@ public:
 protected:
     StunAttribute(uint16_t type, uint16_t length);
     void consume_padding(rtc::ByteBufferReader* buf);
+    void write_padding(rtc::ByteBufferWriter* buf);
 
 private:
     uint16_t _type;
@@ -149,7 +150,7 @@ public:
     bool read(rtc::ByteBufferReader* buf) override;
     bool write(rtc::ByteBufferWriter* buf) override;
 
-private:
+protected:
     rtc::SocketAddress _address;
 };
 
@@ -159,6 +160,9 @@ public:
     ~StunXorAddressAttribute() {}
 
     bool write(rtc::ByteBufferWriter* buf) override;
+
+private:
+    rtc::IPAddress _get_xored_ip();
 };
 
 class StunUInt32Attribute : public StunAttribute {
@@ -169,6 +173,8 @@ public:
     ~StunUInt32Attribute() override {}
 
     uint32_t value() const { return _bits; }
+    void set_value(uint32_t value) { _bits = value; }
+
     bool read(rtc::ByteBufferReader* buf) override;
     bool write(rtc::ByteBufferWriter* buf) override;
 
