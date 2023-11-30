@@ -87,7 +87,7 @@ public:
 
     StunAttributeValueType get_attribute_value_type(int type);
     bool read(rtc::ByteBufferReader* buf);
-    bool write(rtc::ByteBufferWriter* buf);
+    bool write(rtc::ByteBufferWriter* buf) const;
 
     void add_attribute(std::unique_ptr<StunAttribute> attr);
 

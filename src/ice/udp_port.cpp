@@ -81,6 +81,14 @@ IceConnection* UDPPort::get_connection(const rtc::SocketAddress& addr) {
     return iter == _connections.end() ? nullptr : iter->second;
 }
 
+int UDPPort::send_to(const char* buf, size_t len, const rtc::SocketAddress& addr) {
+    if (!_async_socket) {
+        return -1;
+    }
+
+    return _async_socket->send_to(buf, len, addr);
+}
+
 void UDPPort::_on_read_packet(AsyncUdpSocket* socket, char* buf, size_t size, const rtc::SocketAddress& addr,
                               int64_t ts) {
     if (IceConnection* conn = get_connection(addr)) {

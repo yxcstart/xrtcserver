@@ -17,8 +17,11 @@ public:
 
     void handle_stun_binding_request(StunMessage* stun_msg);
     void send_stun_binding_response(StunMessage* stun_msg);
+    void send_response_message(const StunMessage& response);
 
     void on_read_packet(const char* buf, size_t size, int64_t ts);
+
+    std::string to_string();
 
 private:
     EventLoop* _el;
