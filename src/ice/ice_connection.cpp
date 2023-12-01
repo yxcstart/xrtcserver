@@ -29,6 +29,8 @@ void IceConnection::send_stun_binding_response(StunMessage* stun_msg) {
         std::make_unique<StunXorAddressAttribute>(STUN_ATTR_XOR_MAPPED_ADDRESS, remote_candidate().address));
     response.add_message_integrity(_port->ice_pwd());
     response.add_fingerprint();
+
+    send_response_message(response);
 }
 
 void IceConnection::send_response_message(const StunMessage& response) {

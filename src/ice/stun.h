@@ -18,7 +18,7 @@ const size_t k_stun_message_integrity_size = 20;
 
 enum StunMessageType {
     STUN_BINDING_REQUEST = 0x0001,
-    STUN_BINDING_RESPONSE = 0x1001,
+    STUN_BINDING_RESPONSE = 0x0101,
 };
 
 // https://datatracker.ietf.org/doc/html/rfc5389

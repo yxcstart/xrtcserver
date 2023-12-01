@@ -85,6 +85,8 @@ void IceTransportChannel::_on_unknown_address(UDPPort* port, const rtc::SocketAd
     }
     RTC_LOG(LS_INFO) << to_string() << ": create connection from "
                      << " peer reflexive candidate success, remote_addr: " << addr.ToString();
+
+    conn->handle_stun_binding_request(msg);
 }
 
 std::string IceTransportChannel::to_string() {
