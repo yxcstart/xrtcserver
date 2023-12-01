@@ -51,7 +51,36 @@ void IceConnection::send_response_message(const StunMessage& response) {
                      << " addr=" << addr.ToString() << ", id=" << rtc::hex_encode(response.transaction_id());
 }
 
-void IceConnection::on_read_packet(const char* buf, size_t size, int64_t ts) {}
+void IceConnection::on_read_packet(const char* buf, size_t len, int64_t ts) {
+    std::unique_ptr<StunMessage> stun_msg;
+    std::string remote_ufrag;
+    const Candidate& remote = _remote_candidate;
+
+    if (!_port->get_stun_message(buf, len, remote.address, &stun_msg, &remote_ufrag)) {
+        // 这个不是stun包，可能是其它的比如dtls或者rtp包
+    } else if (!stun_msg) {
+        // stun包解析空指针，有问题
+    } else {
+        switch (stun_msg->type()) {
+            case STUN_BINDING_REQUEST:  // 保活请求
+                if (remote_ufrag != remote.username) {
+                    RTC_LOG(LS_WARNING) << to_string() << ": Received " << stun_method_to_string(stun_msg->type())
+                                        << " with bad username=" << remote_ufrag
+                                        << ", id=" << rtc::hex_encode(stun_msg->transaction_id());
+                    _port->send_binding_error_response(stun_msg.get(), remote.address, STUN_ERROR_UNAUTHORIZED,
+                                                       STUN_ERROR_REASON_UNAUTHORIZED);
+                } else {
+                    RTC_LOG(LS_INFO) << to_string() << ": Received " << stun_method_to_string(stun_msg->type())
+                                     << ", id=" << rtc::hex_encode(stun_msg->transaction_id());
+
+                    handle_stun_binding_request(stun_msg.get());
+                }
+                break;
+            default:
+                break;
+        }
+    }
+}
 
 std::string IceConnection::to_string() {
     std::stringstream ss;

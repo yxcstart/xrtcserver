@@ -54,6 +54,7 @@ void IceTransportChannel::gathering_candidate() {
     signal_candidate_allocate_done(this, _local_candidates);
 }
 
+// 解析完stun msg之后处理stun msg
 void IceTransportChannel::_on_unknown_address(UDPPort* port, const rtc::SocketAddress& addr, StunMessage* msg,
                                               const std::string& remote_ufrag) {
     const StunUInt32Attribute* priority_attr = msg->get_uint32(STUN_ATTR_PRIORITY);

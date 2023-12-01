@@ -44,6 +44,7 @@ int UDPPort::create_ice_candidate(Network* network, int min_port, int max_port, 
     _local_addr.SetIP(network->ip());
     _local_addr.SetPort(port);
 
+    // 异步读取udp sock的数据
     _async_socket = std::make_unique<AsyncUdpSocket>(_el, _socket);
     _async_socket->signal_read_packet.connect(this, &UDPPort::_on_read_packet);
 
@@ -91,11 +92,12 @@ int UDPPort::send_to(const char* buf, size_t len, const rtc::SocketAddress& addr
 
 void UDPPort::_on_read_packet(AsyncUdpSocket* socket, char* buf, size_t size, const rtc::SocketAddress& addr,
                               int64_t ts) {
+    // 第二次以及之后的stun msg处理
     if (IceConnection* conn = get_connection(addr)) {
         conn->on_read_packet(buf, size, ts);
         return;
     }
-
+    // 第一次bingding request的处理
     std::unique_ptr<StunMessage> stun_msg;
     std::string remote_ufrag;
     bool res = get_stun_message(buf, size, addr, &stun_msg, &remote_ufrag);
@@ -106,7 +108,7 @@ void UDPPort::_on_read_packet(AsyncUdpSocket* socket, char* buf, size_t size, co
     if (STUN_BINDING_REQUEST == stun_msg->type()) {
         RTC_LOG(LS_INFO) << to_string() << ": Received " << stun_method_to_string(stun_msg->type())
                          << " id=" << rtc::hex_encode(stun_msg->transaction_id()) << " from " << addr.ToString();
-        // 收到联通性检查之后，发送信号，设置remote candidate
+        // 首次收到联通性检查之后，发送信号，设置remote candidate -> ice_transport_channal 注册
         signal_unknown_address(this, addr, stun_msg.get(), remote_ufrag);
     }
 }
@@ -142,7 +144,7 @@ bool UDPPort::get_stun_message(const char* data, size_t len, const rtc::SocketAd
             local_ufrag != _ice_params.ice_ufrag) {
             RTC_LOG(LS_WARNING) << to_string() << ": recevied " << stun_method_to_string(stun_msg->type())
                                 << " with bad local_ufrag: " << local_ufrag << " from " << addr.ToString();
-            send_binding_error_response(stun_msg.get(), addr, STUN_ERROR_UNATHORIZED, STUN_ERROR_REASON_UNATHORIZED);
+            send_binding_error_response(stun_msg.get(), addr, STUN_ERROR_UNAUTHORIZED, STUN_ERROR_REASON_UNAUTHORIZED);
             return true;
         }
 
@@ -150,7 +152,7 @@ bool UDPPort::get_stun_message(const char* data, size_t len, const rtc::SocketAd
             StunMessage::IntegerityStatus::k_integrity_ok) {
             RTC_LOG(LS_WARNING) << to_string() << ": recevied " << stun_method_to_string(stun_msg->type())
                                 << " with bad M-I from " << addr.ToString();
-            send_binding_error_response(stun_msg.get(), addr, STUN_ERROR_UNATHORIZED, STUN_ERROR_REASON_UNATHORIZED);
+            send_binding_error_response(stun_msg.get(), addr, STUN_ERROR_UNAUTHORIZED, STUN_ERROR_REASON_UNAUTHORIZED);
             return true;
         }
         *out_username = remote_ufrag;
@@ -192,6 +194,37 @@ std::string UDPPort::to_string() {
 
 void UDPPort::send_binding_error_response(StunMessage* stun_msg, const rtc::SocketAddress& addr, int err_code,
                                           const std::string& reason) {
-    // todo
+    if (!_async_socket) {
+        return;
+    }
+
+    StunMessage response;
+    response.set_type(STUN_BINDING_ERROR_RESPONSE);
+    response.set_transaction_id(stun_msg->transaction_id());
+    auto error_attr = StunAttribute::create_error_code();
+    error_attr->set_code(err_code);
+    error_attr->set_reason(reason);
+    response.add_attribute(std::move(error_attr));
+
+    if (err_code != STUN_ERROR_BAD_REQUEST && err_code != STUN_ERROR_UNAUTHORIZED) {
+        response.add_message_integrity(_ice_params.ice_pwd);
+    }
+
+    response.add_fingerprint();
+
+    rtc::ByteBufferWriter buf;
+
+    if (!response.write(&buf)) {
+        return;
+    }
+
+    int ret = _async_socket->send_to(buf.Data(), buf.Length(), addr);
+    if (ret < 0) {
+        RTC_LOG(LS_WARNING) << to_string() << " send " << stun_method_to_string(response.type())
+                            << " error, ret=" << ret << ", to=" << addr.ToString();
+    } else {
+        RTC_LOG(LS_WARNING) << to_string() << " send " << stun_method_to_string(response.type())
+                            << ", reason=" << reason << ", to=" << addr.ToString();
+    }
 }
 }  // namespace xrtc
