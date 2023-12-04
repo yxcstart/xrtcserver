@@ -6,6 +6,7 @@
 #include <vector>
 #include "base/event_loop.h"
 #include "ice/candidate.h"
+#include "ice/ice_controller.h"
 #include "ice/ice_credentials.h"
 #include "ice/port_allocator.h"
 #include "ice/stun.h"
@@ -34,6 +35,9 @@ public:
 private:
     void _on_unknown_address(UDPPort* port, const rtc::SocketAddress& addr, StunMessage* msg,
                              const std::string& remote_ufrag);
+    void _add_connection(IceConnection* conn);
+    void _sort_connections_and_update_state();
+    void _maybe_start_pinging();
 
 private:
     EventLoop* _el;
@@ -43,6 +47,8 @@ private:
     IceParameters _ice_params;
     IceParameters _remote_ice_params;
     std::vector<Candidate> _local_candidates;
+    std::unique_ptr<IceController> _ice_controller;
+    bool _start_pinging = false;
 };
 }  // namespace xrtc
 
