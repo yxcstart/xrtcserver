@@ -13,6 +13,7 @@ public:
     IceController(IceTransportChannel* ice_channel) : _ice_channel(ice_channel) {}
     ~IceController() = default;
 
+    const std::vector<IceConnection*> connections() { return _connections; }
     void add_connection(IceConnection* conn);
     bool has_pingable_connection();
 

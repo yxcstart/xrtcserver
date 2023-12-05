@@ -3,6 +3,11 @@
 
 namespace xrtc {
 
+void ice_ping_cb(EventLoop* /*el*/, TimeWatcher* /*w*/, void* data) {
+    IceTransportChannel* channel = (IceTransportChannel*)data;
+    channel->_on_check_and_ping();
+}
+
 IceTransportChannel::IceTransportChannel(EventLoop* el, PortAllocator* allocator, const std::string& transport_name,
                                          IceCandidateComponent component)
     : _el(el),
@@ -12,9 +17,15 @@ IceTransportChannel::IceTransportChannel(EventLoop* el, PortAllocator* allocator
       _ice_controller(new IceController(this)) {
     RTC_LOG(LS_INFO) << "ice transport channel created, transport_name: " << _transport_name
                      << ", component: " << _component;
+    _ping_watcher = _el->create_timer(ice_ping_cb, this, true);
 }
 
-IceTransportChannel::~IceTransportChannel() {}
+IceTransportChannel::~IceTransportChannel() {
+    if (_ping_watcher) {
+        _el->delete_timer(_ping_watcher);
+        _ping_watcher = nullptr;
+    }
+}
 
 void IceTransportChannel::set_ice_params(const IceParameters& ice_params) {
     RTC_LOG(LS_INFO) << "set ICE param, transport_name: " << _transport_name << ", component: " << _component
@@ -26,6 +37,12 @@ void IceTransportChannel::set_remote_ice_params(const IceParameters& ice_params)
     RTC_LOG(LS_INFO) << "set remote ICE param, transport_name: " << _transport_name << ", component: " << _component
                      << ", ufrag: " << ice_params.ice_ufrag << ", pwd: " << ice_params.ice_pwd;
     _remote_ice_params = ice_params;
+
+    for (auto conn : _ice_controller->connections()) {
+        // ping包先到会创建conn，answer后到会设置set_remote_ice_params，更新ice_param
+        conn->maybe_set_remote_ice_params(ice_params);
+    }
+    _sort_connections_and_update_state();
 }
 
 void IceTransportChannel::gathering_candidate() {
@@ -110,8 +127,12 @@ void IceTransportChannel::_maybe_start_pinging() {
         RTC_LOG(LS_INFO) << to_string() << ": Have a pingable connection "
                          << "for the first time, starting to ping";
         // 启动定时器
+        _el->start_timer(_ping_watcher, WEAK_PING_INTERVAL * 3000);
+        _start_pinging = true;
     }
 }
+
+void IceTransportChannel::_on_check_and_ping() { RTC_LOG(LS_WARNING) << "==========_on_check_and_ping"; }
 
 std::string IceTransportChannel::to_string() {
     std::stringstream ss;

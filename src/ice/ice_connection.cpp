@@ -82,6 +82,12 @@ void IceConnection::on_read_packet(const char* buf, size_t len, int64_t ts) {
     }
 }
 
+void IceConnection::maybe_set_remote_ice_params(const IceParameters& ice_params) {
+    if (_remote_candidate.username == ice_params.ice_ufrag && _remote_candidate.password.empty()) {
+        _remote_candidate.password = ice_params.ice_pwd;
+    }
+}
+
 std::string IceConnection::to_string() {
     std::stringstream ss;
     ss << "Conn[" << this << ":" << _port->transport_name() << ":" << _port->component() << ":"

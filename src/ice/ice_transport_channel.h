@@ -38,6 +38,9 @@ private:
     void _add_connection(IceConnection* conn);
     void _sort_connections_and_update_state();
     void _maybe_start_pinging();
+    void _on_check_and_ping();
+
+    friend void ice_ping_cb(EventLoop* /*el*/, TimeWatcher* /*w*/, void* data);
 
 private:
     EventLoop* _el;
@@ -49,6 +52,7 @@ private:
     std::vector<Candidate> _local_candidates;
     std::unique_ptr<IceController> _ice_controller;
     bool _start_pinging = false;
+    TimeWatcher* _ping_watcher = nullptr;
 };
 }  // namespace xrtc
 

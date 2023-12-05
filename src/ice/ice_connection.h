@@ -3,6 +3,7 @@
 
 #include "base/event_loop.h"
 #include "ice/candidate.h"
+#include "ice/ice_credentials.h"
 #include "ice/stun.h"
 namespace xrtc {
 
@@ -27,6 +28,7 @@ public:
     void send_response_message(const StunMessage& response);
 
     void on_read_packet(const char* buf, size_t len, int64_t ts);
+    void maybe_set_remote_ice_params(const IceParameters& ice_params);
 
     bool writable() { return _write_state == STATE_WRITABLE; }
     bool receving() { return _receiving; }
