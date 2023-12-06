@@ -132,7 +132,15 @@ void IceTransportChannel::_maybe_start_pinging() {
     }
 }
 
-void IceTransportChannel::_on_check_and_ping() { RTC_LOG(LS_WARNING) << "==========_on_check_and_ping"; }
+void IceTransportChannel::_on_check_and_ping() {
+    auto result = _ice_controller->select_connection_to_ping(_last_ping_sent_ms);
+
+    if (_cur_ping_interval != result.ping_interval) {
+        _cur_ping_interval = result.ping_interval;
+        _el->stop_timer(_ping_watcher);
+        _el->start_timer(_ping_watcher, _cur_ping_interval);
+    }
+}
 
 std::string IceTransportChannel::to_string() {
     std::stringstream ss;

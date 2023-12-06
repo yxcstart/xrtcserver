@@ -34,6 +34,10 @@ public:
     bool receving() { return _receiving; }
     bool weak() { return !(writable() && receving()); }
     bool active() { return _write_state != STATE_WRITE_TIMEOUT; }
+    bool stable(int64_t now) const;
+
+    int64_t last_ping_sent() const { return _last_ping_sent; }
+    int num_pings_sent() const { return _num_pings_sent; }
 
     std::string to_string();
 
@@ -44,6 +48,9 @@ private:
 
     WriteState _write_state = STATE_WRITE_INIT;
     bool _receiving = false;
+
+    int64_t _last_ping_sent = 0;
+    int _num_pings_sent = 0;
 };
 
 }  // namespace xrtc
