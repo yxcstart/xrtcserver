@@ -324,7 +324,8 @@ StunAttribute::StunAttribute(uint16_t type, uint16_t length) : _type(type), _len
 
 StunAttribute::~StunAttribute() = default;
 
-StunAttribute* StunAttribute::create(StunAttributeValueType value_type, uint16_t type, uint16_t length, void* owner) {
+StunAttribute* StunAttribute::create(StunAttributeValueType value_type, uint16_t type, uint16_t length,
+                                     void* /*owner*/) {
     switch (value_type) {
         case STUN_VALUE_BYTE_STRING:
             return new StunByteStringAttribute(type, length);

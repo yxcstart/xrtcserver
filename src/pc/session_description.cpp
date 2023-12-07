@@ -140,6 +140,7 @@ bool SessionDescription::add_transport_info(const std::string& mid, const IcePar
 }
 bool SessionDescription::add_transport_info(std::shared_ptr<TransportDescription> td) {
     _transport_infos.push_back(td);
+    return true;
 }
 
 std::shared_ptr<TransportDescription> SessionDescription::get_transport_info(const std::string& mid) {
@@ -205,7 +206,7 @@ static void build_rtp_direction(std::shared_ptr<MediaContentDescription> content
 }
 
 static void build_candidate(std::shared_ptr<MediaContentDescription> content, std::stringstream& ss) {
-    bool flag = false;
+    // bool flag = false;
     for (auto c : content->candidates()) {
         // if (rtc::IPIsPrivateNetwork(c.address.ipaddr()) && flag) {
         //     continue;
@@ -213,7 +214,7 @@ static void build_candidate(std::shared_ptr<MediaContentDescription> content, st
         ss << "a=candidate:" << c.foundation << " " << c.component << " " << c.protocol << " " << c.priority;
         if (rtc::IPIsPrivateNetwork(c.address.ipaddr())) {
             ss << " " << g_conf->server_addr;
-            flag = true;
+            // flag = true;
         } else {
             ss << " " << c.address.HostAsURIString();
         }

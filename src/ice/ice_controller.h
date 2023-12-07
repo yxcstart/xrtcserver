@@ -2,8 +2,8 @@
 #ifndef __ICE_CONTROLLER_H__
 #define __ICE_CONTROLLER_H__
 
+#include <set>
 #include "ice/ice_connection.h"
-
 namespace xrtc {
 
 class IceTransportChannel;
@@ -31,11 +31,14 @@ private:
     bool _is_connction_past_ping_interval(const IceConnection* conn, int64_t now);
     int _get_connection_ping_interval(const IceConnection* conn, int64_t now);
     bool _weak() { return _selected_connection == nullptr || _selected_connection->weak(); }
+    bool _more_pingable(IceConnection* conn1, IceConnection* conn2);  // conn1是否比conn2更需要ping
 
 private:
     IceTransportChannel* _ice_channel;
     IceConnection* _selected_connection = nullptr;
     std::vector<IceConnection*> _connections;
+    std::set<IceConnection*> _unpinged_connections;
+    std::set<IceConnection*> _pinged_connections;
 };
 
 }  // namespace xrtc

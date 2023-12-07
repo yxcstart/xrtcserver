@@ -39,14 +39,15 @@ private:
     void _sort_connections_and_update_state();
     void _maybe_start_pinging();
     void _on_check_and_ping();
+    void _ping_connection(IceConnection* conn);
 
     friend void ice_ping_cb(EventLoop* /*el*/, TimeWatcher* /*w*/, void* data);
 
 private:
     EventLoop* _el;
+    PortAllocator* _allocator;
     std::string _transport_name;
     IceCandidateComponent _component;
-    PortAllocator* _allocator;
     IceParameters _ice_params;
     IceParameters _remote_ice_params;
     std::vector<Candidate> _local_candidates;

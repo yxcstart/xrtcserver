@@ -1,6 +1,6 @@
 #include "ice/ice_transport_channel.h"
 #include <rtc_base/logging.h>
-
+#include <rtc_base/time_utils.h>
 namespace xrtc {
 
 void ice_ping_cb(EventLoop* /*el*/, TimeWatcher* /*w*/, void* data) {
@@ -134,12 +134,23 @@ void IceTransportChannel::_maybe_start_pinging() {
 
 void IceTransportChannel::_on_check_and_ping() {
     auto result = _ice_controller->select_connection_to_ping(_last_ping_sent_ms);
+    RTC_LOG(LS_WARNING) << "===========conn: " << result.conn << ", ping interval: " << result.ping_interval;
+
+    if (result.conn) {
+        _ping_connection((IceConnection*)result.conn);
+    }
 
     if (_cur_ping_interval != result.ping_interval) {
         _cur_ping_interval = result.ping_interval;
         _el->stop_timer(_ping_watcher);
         _el->start_timer(_ping_watcher, _cur_ping_interval);
     }
+}
+
+void IceTransportChannel::_ping_connection(IceConnection* conn) {
+    _last_ping_sent_ms = rtc::TimeMillis();
+
+    conn->ping(_last_ping_sent_ms);
 }
 
 std::string IceTransportChannel::to_string() {

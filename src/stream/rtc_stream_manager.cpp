@@ -54,6 +54,7 @@ int RtcStreamManager::set_answer(uint64_t uid, const std::string& stream_name, c
         push_stream->set_remote_sdp(answer);
     } else if ("pull" == stream_type) {
     }
+    return 0;
 }
 
 }  // namespace xrtc

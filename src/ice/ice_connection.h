@@ -5,9 +5,22 @@
 #include "ice/candidate.h"
 #include "ice/ice_credentials.h"
 #include "ice/stun.h"
+#include "ice/stun_request.h"
 namespace xrtc {
 
 class UDPPort;
+class IceConnection;
+
+class ConnectionRequest : public StunRequest {
+public:
+    ConnectionRequest(IceConnection* conn);
+
+protected:
+    void prepare(StunMessage* msg) override;
+
+private:
+    IceConnection* _connection;
+};
 
 class IceConnection {
 public:
@@ -16,6 +29,13 @@ public:
         STATE_WRITE_UNRELIABLE = 1,
         STATE_WRITE_INIT = 2,
         STATE_WRITE_TIMEOUT = 3,
+    };
+
+    struct SentPing {
+        SentPing(const std::string& id, int64_t ts) : id(id), sent_time(ts) {}
+
+        std::string id;
+        int64_t sent_time;
     };
 
     IceConnection(EventLoop* el, UDPPort* port, const Candidate& remote_candidate);
@@ -35,6 +55,7 @@ public:
     bool weak() { return !(writable() && receving()); }
     bool active() { return _write_state != STATE_WRITE_TIMEOUT; }
     bool stable(int64_t now) const;
+    void ping(int64_t now);
 
     int64_t last_ping_sent() const { return _last_ping_sent; }
     int num_pings_sent() const { return _num_pings_sent; }
@@ -51,6 +72,7 @@ private:
 
     int64_t _last_ping_sent = 0;
     int _num_pings_sent = 0;
+    std::vector<SentPing> _ping_since_last_response;  // 发送ping请求的时候作缓存，只有ping收到响应了才从缓存当中删除
 };
 
 }  // namespace xrtc

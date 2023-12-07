@@ -440,7 +440,7 @@ int SignalingWorker::_process_push(int cmdno, TcpConnection* c, const Json::Valu
     return g_rtc_server->send_rtc_msg(msg);
 }
 
-int SignalingWorker::_process_answer(int cmdno, TcpConnection* c, const Json::Value& root, uint32_t log_id) {
+int SignalingWorker::_process_answer(int cmdno, TcpConnection* /*c*/, const Json::Value& root, uint32_t log_id) {
     uint64_t uid;
     std::string stream_name;
     std::string answer;
@@ -450,7 +450,7 @@ int SignalingWorker::_process_answer(int cmdno, TcpConnection* c, const Json::Va
         stream_name = root["stream_name"].asString();
         answer = root["answer"].asString();
         stream_type = root["type"].asString();
-    } catch (Json::Exception e) {
+    } catch (Json::Exception& e) {
         RTC_LOG(LS_WARNING) << "parse json body error: " << e.what() << "log_id: " << log_id;
         return -1;
     }

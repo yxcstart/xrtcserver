@@ -3,6 +3,10 @@
 #include "rtc_base/logging.h"
 namespace xrtc {
 
+ConnectionRequest::ConnectionRequest(IceConnection* conn) : StunRequest(new StunMessage()), _connection(conn) {}
+
+void ConnectionRequest::prepare(StunMessage* msg) {}
+
 IceConnection::IceConnection(EventLoop* el, UDPPort* port, const Candidate& remote_candidate)
     : _el(el), _port(port), _remote_candidate(remote_candidate) {}
 
@@ -51,7 +55,7 @@ void IceConnection::send_response_message(const StunMessage& response) {
                      << " addr=" << addr.ToString() << ", id=" << rtc::hex_encode(response.transaction_id());
 }
 
-void IceConnection::on_read_packet(const char* buf, size_t len, int64_t ts) {
+void IceConnection::on_read_packet(const char* buf, size_t len, int64_t /*ts*/) {
     std::unique_ptr<StunMessage> stun_msg;
     std::string remote_ufrag;
     const Candidate& remote = _remote_candidate;
@@ -91,6 +95,11 @@ void IceConnection::maybe_set_remote_ice_params(const IceParameters& ice_params)
 bool IceConnection::stable(int64_t now) const {
     // todo
     return false;
+}
+
+void IceConnection::ping(int64_t now) {
+    ConnectionRequest* request = new ConnectionRequest(this);
+    _ping_since_last_response.push_back(SentPing(request->id(), now));
 }
 
 std::string IceConnection::to_string() {
