@@ -5,7 +5,24 @@ namespace xrtc {
 
 ConnectionRequest::ConnectionRequest(IceConnection* conn) : StunRequest(new StunMessage()), _connection(conn) {}
 
-void ConnectionRequest::prepare(StunMessage* msg) {}
+void ConnectionRequest::prepare(StunMessage* msg) {
+    msg->set_type(STUN_BINDING_REQUEST);
+    std::string username;
+    // 积极提名
+    _connection->port()->create_stun_username(_connection->remote_candidate().username, &username);
+    msg->add_attribute(std::make_unique<StunByteStringAttribute>(STUN_ATTR_USERNAME, username));
+    msg->add_attribute(std::make_unique<StunUInt64Attribute>(STUN_ATTR_ICE_CONTROLLING, 0));
+    msg->add_attribute(std::make_unique<StunByteStringAttribute>(STUN_ATTR_USERNAME, 0));
+
+    // priority
+    int type_pref = ICE_TYPE_PREFERENCE_PRFLX;
+    uint32_t prflx_priority = (type_pref << 24) | (_connection->local_candidate().priority & 0x00FFFFFF);
+    msg->add_attribute(std::make_unique<StunUInt32Attribute>(STUN_ATTR_PRIORITY, prflx_priority));
+    msg->add_message_integrity(_connection->remote_candidate().password);
+    msg->add_fingerprint();
+}
+
+const Candidate& IceConnection::local_candidate() const { return _port->candidates()[0]; }
 
 IceConnection::IceConnection(EventLoop* el, UDPPort* port, const Candidate& remote_candidate)
     : _el(el), _port(port), _remote_candidate(remote_candidate) {}

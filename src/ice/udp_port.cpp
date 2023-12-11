@@ -227,4 +227,11 @@ void UDPPort::send_binding_error_response(StunMessage* stun_msg, const rtc::Sock
                             << ", reason=" << reason << ", to=" << addr.ToString();
     }
 }
+
+void UDPPort::create_stun_username(const std::string& remote_username, std::string* stun_attr_username) {
+    stun_attr_username->clear();
+    *stun_attr_username = remote_username;
+    stun_attr_username->append(":");
+    stun_attr_username->append(_ice_params.ice_ufrag);
+}
 }  // namespace xrtc

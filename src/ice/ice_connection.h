@@ -42,6 +42,8 @@ public:
     ~IceConnection();
 
     const Candidate& remote_candidate() const { return _remote_candidate; }
+    const Candidate& local_candidate() const;
+    UDPPort* port() { return _port; }
 
     void handle_stun_binding_request(StunMessage* stun_msg);
     void send_stun_binding_response(StunMessage* stun_msg);

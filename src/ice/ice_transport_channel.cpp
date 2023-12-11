@@ -149,7 +149,6 @@ void IceTransportChannel::_on_check_and_ping() {
 
 void IceTransportChannel::_ping_connection(IceConnection* conn) {
     _last_ping_sent_ms = rtc::TimeMillis();
-
     conn->ping(_last_ping_sent_ms);
 }
 

@@ -30,7 +30,7 @@ public:
     const std::string& transport_name() { return _transport_name; }
     IceCandidateComponent component() { return _component; }
     const rtc::SocketAddress& local_addr() { return _local_addr; }
-
+    const std::vector<Candidate>& candidates() { return _candidates; }
     int create_ice_candidate(Network* network, int min_port, int max_port, Candidate& c);
     bool get_stun_message(const char* data, size_t len, const rtc::SocketAddress& addr,
                           std::unique_ptr<StunMessage>* out_msg, std::string* out_username);
@@ -38,6 +38,7 @@ public:
                                      const std::string& reason);
     IceConnection* create_connection(const Candidate& candidate);
     IceConnection* get_connection(const rtc::SocketAddress& addr);
+    void create_stun_username(const std::string& remote_username, std::string* stun_attr_username);
 
     int send_to(const char* buf, size_t len, const rtc::SocketAddress& addr);
 

@@ -487,6 +487,23 @@ bool StunUInt32Attribute::write(rtc::ByteBufferWriter* buf) {
     return true;
 }
 
+// UInt64
+StunUInt64Attribute::StunUInt64Attribute(uint16_t type) : StunAttribute(type, SIZE), _bits(0) {}
+
+StunUInt64Attribute::StunUInt64Attribute(uint16_t type, uint64_t value) : StunAttribute(type, SIZE), _bits(value) {}
+
+bool StunUInt64Attribute::read(rtc::ByteBufferReader* buf) {
+    if (length() != SIZE || !buf->ReadUInt64(&_bits)) {
+        return false;
+    }
+    return true;
+}
+
+bool StunUInt64Attribute::write(rtc::ByteBufferWriter* buf) {
+    buf->WriteUInt64(_bits);
+    return true;
+}
+
 // ByteString
 StunByteStringAttribute::StunByteStringAttribute(uint16_t type, uint16_t length) : StunAttribute(type, length) {}
 
