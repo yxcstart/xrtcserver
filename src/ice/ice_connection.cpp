@@ -25,9 +25,19 @@ void ConnectionRequest::prepare(StunMessage* msg) {
 const Candidate& IceConnection::local_candidate() const { return _port->candidates()[0]; }
 
 IceConnection::IceConnection(EventLoop* el, UDPPort* port, const Candidate& remote_candidate)
-    : _el(el), _port(port), _remote_candidate(remote_candidate) {}
+    : _el(el), _port(port), _remote_candidate(remote_candidate) {
+    _requests.signal_send_packet.connect(this, &IceConnection::_on_stun_send_packet);
+}
 
 IceConnection::~IceConnection() {}
+
+void IceConnection::_on_stun_send_packet(StunRequest* request, const char* buf, size_t len) {
+    int ret = _port->send_to(buf, len, _remote_candidate.address);
+    if (ret < 0) {
+        RTC_LOG(LS_WARNING) << to_string() << ": Failed to send STUN binding request: ret=" << ret
+                            << ", id=" << rtc::hex_encode(request->id());
+    }
+}
 
 void IceConnection::handle_stun_binding_request(StunMessage* stun_msg) {
     // role的冲突问题
@@ -117,6 +127,8 @@ bool IceConnection::stable(int64_t now) const {
 void IceConnection::ping(int64_t now) {
     ConnectionRequest* request = new ConnectionRequest(this);
     _ping_since_last_response.push_back(SentPing(request->id(), now));
+    _requests.send(request);
+    _num_pings_sent++;
 }
 
 std::string IceConnection::to_string() {

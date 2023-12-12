@@ -22,7 +22,7 @@ private:
     IceConnection* _connection;
 };
 
-class IceConnection {
+class IceConnection : public sigslot::has_slots<> {
 public:
     enum WriteState {
         STATE_WRITABLE = 0,
@@ -65,6 +65,9 @@ public:
     std::string to_string();
 
 private:
+    void _on_stun_send_packet(StunRequest* request, const char* buf, size_t len);
+
+private:
     EventLoop* _el;
     UDPPort* _port;
     Candidate _remote_candidate;
@@ -75,6 +78,7 @@ private:
     int64_t _last_ping_sent = 0;
     int _num_pings_sent = 0;
     std::vector<SentPing> _ping_since_last_response;  // 发送ping请求的时候作缓存，只有ping收到响应了才从缓存当中删除
+    StunRequestManager _requests;
 };
 
 }  // namespace xrtc
