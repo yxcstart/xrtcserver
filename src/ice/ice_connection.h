@@ -17,8 +17,8 @@ public:
 
 protected:
     void prepare(StunMessage* msg) override;
-    void on_response(StunMessage*) override;
-    void on_error_response(StunMessage*) override;
+    void on_request_response(StunMessage*) override;
+    void on_request_error_response(StunMessage*) override;
 
 private:
     IceConnection* _connection;
@@ -53,9 +53,10 @@ public:
 
     void on_read_packet(const char* buf, size_t len, int64_t ts);
 
-    void on_connection_response(ConnectionRequest* request, StunMessage* msg);
-    void on_connection_error_response(ConnectionRequest* request, StunMessage* msg);
+    void on_connection_request_response(ConnectionRequest* request, StunMessage* msg);
+    void on_connection_request_error_response(ConnectionRequest* request, StunMessage* msg);
     void maybe_set_remote_ice_params(const IceParameters& ice_params);
+    void print_pings_since_last_reponse(std::string& pings, size_t max);
 
     bool writable() { return _write_state == STATE_WRITABLE; }
     bool receving() { return _receiving; }
@@ -82,7 +83,7 @@ private:
 
     int64_t _last_ping_sent = 0;
     int _num_pings_sent = 0;
-    std::vector<SentPing> _ping_since_last_response;  // 发送ping请求的时候作缓存，只有ping收到响应了才从缓存当中删除
+    std::vector<SentPing> _pings_since_last_response;  // 发送ping请求的时候作缓存，只有ping收到响应了才从缓存当中删除
     StunRequestManager _requests;
 };
 

@@ -1,6 +1,7 @@
 #include "ice/stun_request.h"
 #include <rtc_base/logging.h>
 #include <rtc_base/string_encode.h>
+#include <rtc_base/time_utils.h>
 namespace xrtc {
 
 void StunRequestManager::send(StunRequest* request) {
@@ -18,9 +19,9 @@ bool StunRequestManager::check_response(StunMessage* msg) {
 
     StunRequest* request = iter->second;
     if (msg->type() == get_stun_success_response(request->type())) {
-        request->on_response(msg);
+        request->on_request_response(msg);
     } else if (msg->type() == get_stun_error_response(request->type())) {
-        request->on_error_response(msg);
+        request->on_request_error_response(msg);
     } else {
         RTC_LOG(LS_WARNING) << "Received STUN binding response with wrong type=" << msg->type()
                             << ", id=" << rtc::hex_encode(msg->transaction_id());
@@ -35,8 +36,11 @@ StunRequest::~StunRequest() {}
 
 void StunRequest::construct() { prepare(_msg); }
 
+int StunRequest::elapsed() { return rtc::TimeMillis() - _ts; }
+
 void StunRequest::send() {
     rtc::ByteBufferWriter buf;
+    _ts = rtc::TimeMillis();
     if (!_msg->write(&buf)) {
         return;
     }

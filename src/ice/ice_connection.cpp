@@ -22,9 +22,13 @@ void ConnectionRequest::prepare(StunMessage* msg) {
     msg->add_fingerprint();
 }
 
-void ConnectionRequest::on_response(StunMessage* msg) { _connection->on_connection_response(this, msg); }
+void ConnectionRequest::on_request_response(StunMessage* msg) {
+    _connection->on_connection_request_response(this, msg);
+}
 
-void ConnectionRequest::on_error_response(StunMessage* msg) { _connection->on_connection_error_response(this, msg); }
+void ConnectionRequest::on_request_error_response(StunMessage* msg) {
+    _connection->on_connection_request_error_response(this, msg);
+}
 
 const Candidate& IceConnection::local_candidate() const { return _port->candidates()[0]; }
 
@@ -43,8 +47,30 @@ void IceConnection::_on_stun_send_packet(StunRequest* request, const char* buf, 
     }
 }
 
-void IceConnection::on_connection_response(ConnectionRequest* request, StunMessage* msg) {}
-void IceConnection::on_connection_error_response(ConnectionRequest* request, StunMessage* msg) {}
+void IceConnection::print_pings_since_last_reponse(std::string& pings, size_t max) {
+    std::stringstream ss;
+    if (_pings_since_last_response.size() > max) {
+        for (size_t i = 0; i < max; i++) {
+            ss << rtc::hex_encode(_pings_since_last_response[i].id) << " ";
+        }
+        ss << "... " << (_pings_since_last_response.size() - max) << " more";
+    } else {
+        for (auto ping : _pings_since_last_response) {
+            ss << rtc::hex_encode(ping.id) << " ";
+        }
+    }
+    pings = ss.str();
+}
+
+void IceConnection::on_connection_request_response(ConnectionRequest* request, StunMessage* msg) {
+    int rtt = request->elapsed();
+    std::string pings;
+    print_pings_since_last_reponse(pings, 5);
+    RTC_LOG(LS_INFO) << to_string() << ": Received " << stun_method_to_string(msg->type())
+                     << ", id=" << rtc::hex_encode(msg->transaction_id()) << ", rtt=" << rtt << ", pings=" << pings;
+}
+
+void IceConnection::on_connection_request_error_response(ConnectionRequest* request, StunMessage* msg) {}
 
 void IceConnection::handle_stun_binding_request(StunMessage* stun_msg) {
     // role的冲突问题
@@ -140,7 +166,8 @@ bool IceConnection::stable(int64_t now) const {
 
 void IceConnection::ping(int64_t now) {
     ConnectionRequest* request = new ConnectionRequest(this);
-    _ping_since_last_response.push_back(SentPing(request->id(), now));
+    _pings_since_last_response.push_back(SentPing(request->id(), now));
+    RTC_LOG(LS_INFO) << to_string() << ": Sending STUN ping, id=" << rtc::hex_encode(request->id());
     _requests.send(request);
     _num_pings_sent++;
 }
