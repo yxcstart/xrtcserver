@@ -574,4 +574,10 @@ bool StunErrorCodeAttribute::write(rtc::ByteBufferWriter* buf) {
     return true;
 }
 
+int get_stun_success_response(int req_type) { return is_stun_request_type(req_type) ? (req_type | 0x100) : -1; }
+
+int get_stun_error_response(int req_type) { return is_stun_request_type(req_type) ? (req_type | 0x110) : -1; }
+
+bool is_stun_request_type(int req_type) { return (req_type & k_stun_type_mask) == 0x000; }
+
 }  // namespace xrtc

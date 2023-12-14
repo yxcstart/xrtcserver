@@ -22,6 +22,10 @@ void ConnectionRequest::prepare(StunMessage* msg) {
     msg->add_fingerprint();
 }
 
+void ConnectionRequest::on_response(StunMessage* msg) { _connection->on_connection_response(this, msg); }
+
+void ConnectionRequest::on_error_response(StunMessage* msg) { _connection->on_connection_error_response(this, msg); }
+
 const Candidate& IceConnection::local_candidate() const { return _port->candidates()[0]; }
 
 IceConnection::IceConnection(EventLoop* el, UDPPort* port, const Candidate& remote_candidate)
@@ -38,6 +42,9 @@ void IceConnection::_on_stun_send_packet(StunRequest* request, const char* buf, 
                             << ", id=" << rtc::hex_encode(request->id());
     }
 }
+
+void IceConnection::on_connection_response(ConnectionRequest* request, StunMessage* msg) {}
+void IceConnection::on_connection_error_response(ConnectionRequest* request, StunMessage* msg) {}
 
 void IceConnection::handle_stun_binding_request(StunMessage* stun_msg) {
     // role的冲突问题
@@ -107,6 +114,13 @@ void IceConnection::on_read_packet(const char* buf, size_t len, int64_t /*ts*/) 
                     handle_stun_binding_request(stun_msg.get());
                 }
                 break;
+            case STUN_BINDING_RESPONSE:
+            case STUN_BINDING_ERROR_RESPONSE:
+                stun_msg->validate_message_integrity(_remote_candidate.password);
+                if (stun_msg->integrity_ok()) {
+                    _requests.check_response(stun_msg.get());
+                }
+
             default:
                 break;
         }

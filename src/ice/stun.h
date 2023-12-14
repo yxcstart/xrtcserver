@@ -15,6 +15,7 @@ const size_t k_stun_transaction_id_length = 12;
 const uint32_t k_stun_magic_cookie = 0x2112A442;
 const size_t k_stun_magic_cookie_length = sizeof(k_stun_magic_cookie);
 const size_t k_stun_message_integrity_size = 20;
+const uint32_t k_stun_type_mask = 0x0110;
 
 enum StunMessageType {
     STUN_BINDING_REQUEST = 0x0001,
@@ -89,6 +90,9 @@ public:
 
     IntegerityStatus validate_message_integrity(const std::string& password);
     bool add_message_integrity(const std::string& password);
+
+    IntegerityStatus integrity() { return _integrity; }
+    bool integrity_ok() { return _integrity == IntegerityStatus::k_integrity_ok; }
 
     StunAttributeValueType get_attribute_value_type(int type);
     bool read(rtc::ByteBufferReader* buf);
@@ -242,6 +246,10 @@ private:
     uint8_t _number;
     std::string _reason;
 };
+
+int get_stun_success_response(int req_type);
+int get_stun_error_response(int req_type);
+bool is_stun_request_type(int req_type);
 
 }  // namespace xrtc
 
