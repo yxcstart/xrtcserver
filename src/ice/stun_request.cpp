@@ -1,4 +1,5 @@
 #include "ice/stun_request.h"
+#include <rtc_base/helpers.h>
 #include <rtc_base/logging.h>
 #include <rtc_base/string_encode.h>
 #include <rtc_base/time_utils.h>
@@ -31,7 +32,9 @@ bool StunRequestManager::check_response(StunMessage* msg) {
     return true;
 }
 
-StunRequest::StunRequest(StunMessage* msg) : _msg(msg) {}
+StunRequest::StunRequest(StunMessage* msg) : _msg(msg) {
+    _msg->set_transaction_id(rtc::CreateRandomString(k_stun_transaction_id_length));
+}
 StunRequest::~StunRequest() {}
 
 void StunRequest::construct() { prepare(_msg); }

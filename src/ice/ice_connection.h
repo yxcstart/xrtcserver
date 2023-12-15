@@ -58,17 +58,24 @@ public:
     void maybe_set_remote_ice_params(const IceParameters& ice_params);
     void print_pings_since_last_reponse(std::string& pings, size_t max);
 
+    void set_write_state(WriteState state);
     bool writable() { return _write_state == STATE_WRITABLE; }
     bool receving() { return _receiving; }
     bool weak() { return !(writable() && receving()); }
     bool active() { return _write_state != STATE_WRITE_TIMEOUT; }
     bool stable(int64_t now) const;
     void ping(int64_t now);
+    void received_ping_response(int rtt);
+    void update_receiving(int64_t now);
+    int receiving_timeout();
 
     int64_t last_ping_sent() const { return _last_ping_sent; }
+    int64_t last_received();
     int num_pings_sent() const { return _num_pings_sent; }
 
     std::string to_string();
+
+    sigslot::signal1<IceConnection*> signal_state_change;
 
 private:
     void _on_stun_send_packet(StunRequest* request, const char* buf, size_t len);
@@ -82,6 +89,9 @@ private:
     bool _receiving = false;
 
     int64_t _last_ping_sent = 0;
+    int64_t _last_ping_recevied = 0;
+    int64_t _last_ping_response_received = 0;
+    int64_t _last_data_recevied = 0;
     int _num_pings_sent = 0;
     std::vector<SentPing> _pings_since_last_response;  // 发送ping请求的时候作缓存，只有ping收到响应了才从缓存当中删除
     StunRequestManager _requests;
