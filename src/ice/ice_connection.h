@@ -60,8 +60,8 @@ public:
 
     void set_write_state(WriteState state);
     bool writable() { return _write_state == STATE_WRITABLE; }
-    bool receving() { return _receiving; }
-    bool weak() { return !(writable() && receving()); }
+    bool receiving() { return _receiving; }
+    bool weak() { return !(writable() && receiving()); }
     bool active() { return _write_state != STATE_WRITE_TIMEOUT; }
     bool stable(int64_t now) const;
     void ping(int64_t now);

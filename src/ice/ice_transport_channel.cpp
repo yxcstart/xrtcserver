@@ -117,9 +117,19 @@ void IceTransportChannel::_on_unknown_address(UDPPort* port, const rtc::SocketAd
     _sort_connections_and_update_state();
 }
 
-void IceTransportChannel::_add_connection(IceConnection* conn) { _ice_controller->add_connection(conn); }
+void IceTransportChannel::_add_connection(IceConnection* conn) {
+    conn->signal_state_change.connect(this, &IceTransportChannel::_on_connection_state_change);
+    _ice_controller->add_connection(conn);
+}
 
-void IceTransportChannel::_sort_connections_and_update_state() { _maybe_start_pinging(); }
+void IceTransportChannel::_on_connection_state_change(IceConnection* /*conn*/) { _sort_connections_and_update_state(); }
+
+void IceTransportChannel::_sort_connections_and_update_state() {
+    _maybe_swtich_selected_connection(_ice_controller->sort_and_switch_connection());
+    _maybe_start_pinging();
+}
+
+void IceTransportChannel::_maybe_swtich_selected_connection(IceConnection* conn) {}
 
 void IceTransportChannel::_maybe_start_pinging() {
     if (_start_pinging) {
