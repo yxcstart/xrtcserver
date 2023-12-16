@@ -1,9 +1,13 @@
 #include "ice/ice_connection.h"
+#include <rtc_base/helpers.h>
 #include <rtc_base/logging.h>
 #include <rtc_base/time_utils.h>
 #include "ice/udp_port.h"
 
 namespace xrtc {
+
+// old_rtt : new_rtt = 3 : 1
+const int RTT_RATIO = 3;
 
 ConnectionRequest::ConnectionRequest(IceConnection* conn) : StunRequest(new StunMessage()), _connection(conn) {}
 
@@ -99,6 +103,16 @@ void IceConnection::update_receiving(int64_t now) {
 }
 
 void IceConnection::received_ping_response(int rtt) {
+    // old_rtt : new_rtt = 3 : 1
+    // 5 10 20
+    // rtt = 5
+    // rtt = 5 * 0.75 + 10 * 0.25 = 3.75 + 2.5 = 6.25
+    if (_rtt_samples > 0) {
+        _rtt = rtc::GetNextMovingAverage(_rtt, rtt, RTT_RATIO);
+    } else {
+        _rtt = rtt;
+    }
+
     _last_ping_response_received = rtc::TimeMillis();
     _pings_since_last_response.clear();
     update_receiving(_last_ping_response_received);
@@ -115,6 +129,18 @@ void IceConnection::on_connection_request_response(ConnectionRequest* request, S
 }
 
 void IceConnection::on_connection_request_error_response(ConnectionRequest* request, StunMessage* msg) {}
+
+// rfc5245
+// g : controlling candidate priority
+// d : controlled candidate priority
+// conn priority = 2^32 * min(g, d) + 2 * max(g, d) + (g > d ? 1 : 0)
+uint64_t IceConnection::priority() {
+    uint32_t g = local_candidate().priority;
+    uint32_t d = remote_candidate().priority;
+    uint32_t priority = std::min(g, d);
+    priority = priority << 32;
+    return priority + 2 * std::max(g, d) + (g > d ? 1 : 0);
+}
 
 void IceConnection::handle_stun_binding_request(StunMessage* stun_msg) {
     // role的冲突问题

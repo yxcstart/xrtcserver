@@ -147,6 +147,14 @@ int IceController::_compare_connections(IceConnection* a, IceConnection* b) {
         return b_is_better;
     }
 
+    if (a->priority() > b->priority()) {
+        return a_is_better;
+    }
+
+    if (a->priority() < b->priority()) {
+        return b_is_better;
+    }
+
     return 0;
 }
 
@@ -156,6 +164,8 @@ IceConnection* IceController::sort_and_switch_connection() {
         if (cmp != 0) {
             return cmp > 0;
         }
+
+        return conn1->rtt() < conn2->rtt();
     });
 }
 

@@ -68,6 +68,8 @@ public:
     void received_ping_response(int rtt);
     void update_receiving(int64_t now);
     int receiving_timeout();
+    uint64_t priority();
+    int rtt() { return _rtt; }
 
     int64_t last_ping_sent() const { return _last_ping_sent; }
     int64_t last_received();
@@ -95,6 +97,8 @@ private:
     int _num_pings_sent = 0;
     std::vector<SentPing> _pings_since_last_response;  // 发送ping请求的时候作缓存，只有ping收到响应了才从缓存当中删除
     StunRequestManager _requests;
+    int _rtt = 3000;
+    int _rtt_samples = 0;
 };
 
 }  // namespace xrtc
