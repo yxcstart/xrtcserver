@@ -63,8 +63,6 @@ void IceTransportChannel::gathering_candidate() {
     }
 
     for (auto network : network_list) {
-        RTC_LOG(LS_INFO) << "new UDPPort" << _transport_name << _component << _ice_params.ice_ufrag
-                         << _ice_params.ice_pwd;
         UDPPort* port = new UDPPort(_el, _transport_name, _component, _ice_params);
         port->signal_unknown_address.connect(this, &IceTransportChannel::_on_unknown_address);
 
@@ -146,7 +144,7 @@ void IceTransportChannel::_maybe_swtich_selected_connection(IceConnection* conn)
 
     _selected_connection = conn;
     _selected_connection->set_selected(true);
-    _ice_controller->set_selected_connection(conn);
+    _ice_controller->set_selected_connection(_selected_connection);
 }
 
 void IceTransportChannel::_maybe_start_pinging() {
@@ -167,7 +165,9 @@ void IceTransportChannel::_on_check_and_ping() {
     RTC_LOG(LS_WARNING) << "===========conn: " << result.conn << ", ping interval: " << result.ping_interval;
 
     if (result.conn) {
-        _ping_connection((IceConnection*)result.conn);
+        IceConnection* conn = (IceConnection*)result.conn;
+        _ping_connection(conn);
+        _ice_controller->mark_connection_pinged(conn);
     }
 
     if (_cur_ping_interval != result.ping_interval) {

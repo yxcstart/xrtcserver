@@ -26,11 +26,12 @@ public:
     PingResult select_connection_to_ping(int64_t last_ping_sent_ms);
     IceConnection* sort_and_switch_connection();
     void set_selected_connection(IceConnection* conn) { _selected_connection = conn; }
+    void mark_connection_pinged(IceConnection* conn);
 
 private:
     bool _is_pingable(IceConnection* conn);
     const IceConnection* _find_next_pingable_connection(int64_t last_ping_sent_ms);
-    bool _is_connction_past_ping_interval(const IceConnection* conn, int64_t now);
+    bool _is_connection_past_ping_interval(const IceConnection* conn, int64_t now);
     int _get_connection_ping_interval(const IceConnection* conn, int64_t now);
     bool _weak() { return _selected_connection == nullptr || _selected_connection->weak(); }
     bool _more_pingable(IceConnection* conn1, IceConnection* conn2);  // conn1是否比conn2更需要ping

@@ -11,7 +11,6 @@ const int a_is_better = 1;
 const int b_is_better = -1;
 
 void IceController::add_connection(IceConnection* conn) {
-    RTC_LOG(LS_INFO) << "add_connection " << conn->to_string();
     _connections.push_back(conn);
     _unpinged_connections.insert(conn);
 }
@@ -45,7 +44,6 @@ bool IceController::_is_pingable(IceConnection* conn) {
 PingResult IceController::select_connection_to_ping(int64_t last_ping_sent_ms) {
     bool need_ping_more_at_weak = false;
     for (auto conn : _connections) {
-        RTC_LOG(LS_INFO) << "+++conn num_pings_sent " << conn->num_pings_sent();
         if (conn->num_pings_sent() < MIN_PINGS_AT_WEAK_PING_INTERVAL) {
             need_ping_more_at_weak = true;
             break;
@@ -65,7 +63,7 @@ PingResult IceController::select_connection_to_ping(int64_t last_ping_sent_ms) {
 
 const IceConnection* IceController::_find_next_pingable_connection(int64_t now) {
     if (_selected_connection && _selected_connection->writable() &&
-        _is_connction_past_ping_interval(_selected_connection, now)) {
+        _is_connection_past_ping_interval(_selected_connection, now)) {
         return _selected_connection;
     }
 
@@ -108,7 +106,7 @@ bool IceController::_more_pingable(IceConnection* conn1, IceConnection* conn2) {
     return false;
 }
 
-bool IceController::_is_connction_past_ping_interval(const IceConnection* conn, int64_t now) {
+bool IceController::_is_connection_past_ping_interval(const IceConnection* conn, int64_t now) {
     int interval = _get_connection_ping_interval(conn, now);
     return now >= conn->last_ping_sent() + interval;
 }
@@ -134,11 +132,11 @@ int IceController::_compare_connections(IceConnection* a, IceConnection* b) {
         return b_is_better;
     }
 
-    if (a->writable() < b->writable()) {
+    if (a->write_state() < b->write_state()) {
         return a_is_better;
     }
 
-    if (a->writable() > b->writable()) {
+    if (a->write_state() > b->write_state()) {
         return b_is_better;
     }
 
@@ -194,6 +192,12 @@ IceConnection* IceController::sort_and_switch_connection() {
     }
 
     return nullptr;
+}
+
+void IceController::mark_connection_pinged(IceConnection* conn) {
+    if (conn && _pinged_connections.insert(conn).second) {
+        _unpinged_connections.erase(conn);
+    }
 }
 
 }  // namespace xrtc

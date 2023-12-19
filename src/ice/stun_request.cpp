@@ -26,9 +26,11 @@ bool StunRequestManager::check_response(StunMessage* msg) {
     } else {
         RTC_LOG(LS_WARNING) << "Received STUN binding response with wrong type=" << msg->type()
                             << ", id=" << rtc::hex_encode(msg->transaction_id());
+        delete request;
         return false;
     }
 
+    delete request;
     return true;
 }
 

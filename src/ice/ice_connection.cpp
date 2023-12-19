@@ -53,10 +53,10 @@ void IceConnection::_on_stun_send_packet(StunRequest* request, const char* buf, 
     }
 }
 
-void IceConnection::print_pings_since_last_reponse(std::string& pings, size_t max) {
+void IceConnection::print_pings_since_last_response(std::string& pings, size_t max) {
     std::stringstream ss;
     if (_pings_since_last_response.size() > max) {
-        for (size_t i = 0; i < max; i++) {
+        for (size_t i = 0; i < max; ++i) {
             ss << rtc::hex_encode(_pings_since_last_response[i].id) << " ";
         }
         ss << "... " << (_pings_since_last_response.size() - max) << " more";
@@ -122,7 +122,7 @@ void IceConnection::received_ping_response(int rtt) {
 void IceConnection::on_connection_request_response(ConnectionRequest* request, StunMessage* msg) {
     int rtt = request->elapsed();
     std::string pings;
-    print_pings_since_last_reponse(pings, 5);
+    print_pings_since_last_response(pings, 5);
     RTC_LOG(LS_INFO) << to_string() << ": Received " << stun_method_to_string(msg->type())
                      << ", id=" << rtc::hex_encode(msg->transaction_id()) << ", rtt=" << rtt << ", pings=" << pings;
     received_ping_response(rtt);

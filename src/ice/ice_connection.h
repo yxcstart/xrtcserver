@@ -56,7 +56,7 @@ public:
     void on_connection_request_response(ConnectionRequest* request, StunMessage* msg);
     void on_connection_request_error_response(ConnectionRequest* request, StunMessage* msg);
     void maybe_set_remote_ice_params(const IceParameters& ice_params);
-    void print_pings_since_last_reponse(std::string& pings, size_t max);
+    void print_pings_since_last_response(std::string& pings, size_t max);
 
     void set_write_state(WriteState state);
     WriteState write_state() { return _write_state; }
