@@ -63,6 +63,8 @@ void IceTransportChannel::gathering_candidate() {
     }
 
     for (auto network : network_list) {
+        RTC_LOG(LS_INFO) << "new UDPPort" << _transport_name << _component << _ice_params.ice_ufrag
+                         << _ice_params.ice_pwd;
         UDPPort* port = new UDPPort(_el, _transport_name, _component, _ice_params);
         port->signal_unknown_address.connect(this, &IceTransportChannel::_on_unknown_address);
 
@@ -129,7 +131,23 @@ void IceTransportChannel::_sort_connections_and_update_state() {
     _maybe_start_pinging();
 }
 
-void IceTransportChannel::_maybe_swtich_selected_connection(IceConnection* conn) {}
+void IceTransportChannel::_maybe_swtich_selected_connection(IceConnection* conn) {
+    if (!conn) {
+        return;
+    }
+
+    IceConnection* old_selected_connection = _selected_connection;
+    if (old_selected_connection) {
+        old_selected_connection->set_selected(false);
+        RTC_LOG(LS_INFO) << to_string() << ": Previous connection: " << old_selected_connection->to_string();
+    }
+
+    RTC_LOG(LS_INFO) << to_string() << ": New selected connection: " << conn->to_string();
+
+    _selected_connection = conn;
+    _selected_connection->set_selected(true);
+    _ice_controller->set_selected_connection(conn);
+}
 
 void IceTransportChannel::_maybe_start_pinging() {
     if (_start_pinging) {
@@ -139,7 +157,7 @@ void IceTransportChannel::_maybe_start_pinging() {
         RTC_LOG(LS_INFO) << to_string() << ": Have a pingable connection "
                          << "for the first time, starting to ping";
         // 启动定时器
-        _el->start_timer(_ping_watcher, WEAK_PING_INTERVAL * 3000);
+        _el->start_timer(_ping_watcher, _cur_ping_interval * 1000);
         _start_pinging = true;
     }
 }
@@ -155,7 +173,7 @@ void IceTransportChannel::_on_check_and_ping() {
     if (_cur_ping_interval != result.ping_interval) {
         _cur_ping_interval = result.ping_interval;
         _el->stop_timer(_ping_watcher);
-        _el->start_timer(_ping_watcher, _cur_ping_interval);
+        _el->start_timer(_ping_watcher, _cur_ping_interval * 1000);
     }
 }
 

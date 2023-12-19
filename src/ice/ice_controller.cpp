@@ -6,10 +6,12 @@
 
 namespace xrtc {
 
+const int k_min_improvement = 10;
 const int a_is_better = 1;
 const int b_is_better = -1;
 
 void IceController::add_connection(IceConnection* conn) {
+    RTC_LOG(LS_INFO) << "add_connection " << conn->to_string();
     _connections.push_back(conn);
     _unpinged_connections.insert(conn);
 }
@@ -43,6 +45,7 @@ bool IceController::_is_pingable(IceConnection* conn) {
 PingResult IceController::select_connection_to_ping(int64_t last_ping_sent_ms) {
     bool need_ping_more_at_weak = false;
     for (auto conn : _connections) {
+        RTC_LOG(LS_INFO) << "+++conn num_pings_sent " << conn->num_pings_sent();
         if (conn->num_pings_sent() < MIN_PINGS_AT_WEAK_PING_INTERVAL) {
             need_ping_more_at_weak = true;
             break;
@@ -119,7 +122,7 @@ int IceController::_get_connection_ping_interval(const IceConnection* conn, int6
         return STABLING_CONNECTION_PING_INTERVAL;
     }
 
-    return STRONG_PING_INTERVAL;
+    return STABLE_CONNECTION_PING_INTERVAL;
 }
 
 int IceController::_compare_connections(IceConnection* a, IceConnection* b) {
@@ -158,6 +161,10 @@ int IceController::_compare_connections(IceConnection* a, IceConnection* b) {
     return 0;
 }
 
+bool IceController::_ready_to_send(IceConnection* conn) {
+    return conn && (conn->writable() || conn->write_state() == IceConnection::STATE_WRITE_UNRELIABLE);
+}
+
 IceConnection* IceController::sort_and_switch_connection() {
     absl::c_stable_sort(_connections, [this](IceConnection* conn1, IceConnection* conn2) {
         int cmp = _compare_connections(conn1, conn2);
@@ -167,6 +174,26 @@ IceConnection* IceController::sort_and_switch_connection() {
 
         return conn1->rtt() < conn2->rtt();
     });
+
+    RTC_LOG(LS_INFO) << "Sort " << _connections.size() << " available connetions:";
+    for (auto conn : _connections) {
+        RTC_LOG(LS_INFO) << conn->to_string();
+    }
+
+    IceConnection* top_connection = _connections.empty() ? nullptr : _connections[0];
+    if (!_ready_to_send(top_connection) || _selected_connection == top_connection) {
+        return nullptr;
+    }
+
+    if (!_selected_connection) {
+        return top_connection;
+    }
+
+    if (top_connection->rtt() <= _selected_connection->rtt() - k_min_improvement) {
+        return top_connection;
+    }
+
+    return nullptr;
 }
 
 }  // namespace xrtc

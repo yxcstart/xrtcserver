@@ -18,7 +18,7 @@ void ConnectionRequest::prepare(StunMessage* msg) {
     _connection->port()->create_stun_username(_connection->remote_candidate().username, &username);
     msg->add_attribute(std::make_unique<StunByteStringAttribute>(STUN_ATTR_USERNAME, username));
     msg->add_attribute(std::make_unique<StunUInt64Attribute>(STUN_ATTR_ICE_CONTROLLING, 0));
-    msg->add_attribute(std::make_unique<StunByteStringAttribute>(STUN_ATTR_USERNAME, 0));
+    msg->add_attribute(std::make_unique<StunByteStringAttribute>(STUN_ATTR_USE_CANDIDATE, 0));
 
     // priority
     int type_pref = ICE_TYPE_PREFERENCE_PRFLX;
@@ -216,7 +216,7 @@ void IceConnection::on_read_packet(const char* buf, size_t len, int64_t /*ts*/) 
                 if (stun_msg->integrity_ok()) {
                     _requests.check_response(stun_msg.get());
                 }
-
+                break;
             default:
                 break;
         }

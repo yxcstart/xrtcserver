@@ -59,6 +59,7 @@ public:
     void print_pings_since_last_reponse(std::string& pings, size_t max);
 
     void set_write_state(WriteState state);
+    WriteState write_state() { return _write_state; }
     bool writable() { return _write_state == STATE_WRITABLE; }
     bool receiving() { return _receiving; }
     bool weak() { return !(writable() && receiving()); }
@@ -70,6 +71,9 @@ public:
     int receiving_timeout();
     uint64_t priority();
     int rtt() { return _rtt; }
+
+    void set_selected(bool value) { _selected = value; }
+    bool selected() { return _selected; }
 
     int64_t last_ping_sent() const { return _last_ping_sent; }
     int64_t last_received();
@@ -89,7 +93,7 @@ private:
 
     WriteState _write_state = STATE_WRITE_INIT;
     bool _receiving = false;
-
+    bool _selected = false;
     int64_t _last_ping_sent = 0;
     int64_t _last_ping_recevied = 0;
     int64_t _last_ping_response_received = 0;
