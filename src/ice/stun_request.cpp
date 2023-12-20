@@ -5,11 +5,26 @@
 #include <rtc_base/time_utils.h>
 namespace xrtc {
 
+StunRequestManager::~StunRequestManager() {
+    while (_requests.begin() != _requests.end()) {
+        StunRequest* request = _requests.begin()->second;
+        _requests.erase(_requests.begin());
+        delete request;
+    }
+}
+
 void StunRequestManager::send(StunRequest* request) {
     request->set_manager(this);
     request->construct();
     _requests[request->id()] = request;
     request->send();
+}
+
+void StunRequestManager::remove(StunRequest* request) {
+    auto iter = _requests.find(request->id());
+    if (iter != _requests.end()) {
+        _requests.erase(iter);
+    }
 }
 
 bool StunRequestManager::check_response(StunMessage* msg) {
@@ -37,7 +52,14 @@ bool StunRequestManager::check_response(StunMessage* msg) {
 StunRequest::StunRequest(StunMessage* msg) : _msg(msg) {
     _msg->set_transaction_id(rtc::CreateRandomString(k_stun_transaction_id_length));
 }
-StunRequest::~StunRequest() {}
+StunRequest::~StunRequest() {
+    if (_manager) {
+        _manager->remove(this);
+    }
+
+    delete _msg;
+    _msg = nullptr;
+}
 
 void StunRequest::construct() { prepare(_msg); }
 

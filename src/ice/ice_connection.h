@@ -74,6 +74,7 @@ public:
 
     void set_selected(bool value) { _selected = value; }
     bool selected() { return _selected; }
+    void fail_and_destroy();
 
     int64_t last_ping_sent() const { return _last_ping_sent; }
     int64_t last_received();
