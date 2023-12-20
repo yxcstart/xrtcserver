@@ -27,6 +27,7 @@ public:
     IceConnection* sort_and_switch_connection();
     void set_selected_connection(IceConnection* conn) { _selected_connection = conn; }
     void mark_connection_pinged(IceConnection* conn);
+    void on_connection_destroyed(IceConnection* conn);
 
 private:
     bool _is_pingable(IceConnection* conn);

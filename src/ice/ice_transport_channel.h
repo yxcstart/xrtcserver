@@ -40,9 +40,10 @@ private:
     void _maybe_start_pinging();
     void _on_check_and_ping();
     void _on_connection_state_change(IceConnection* conn);
+    void _on_connection_destroyed(IceConnection* conn);
     void _ping_connection(IceConnection* conn);
-    void _maybe_swtich_selected_connection(IceConnection* conn);
-
+    void _maybe_switch_selected_connection(IceConnection* conn);
+    void _switch_selected_connection(IceConnection* conn);
     friend void ice_ping_cb(EventLoop* /*el*/, TimeWatcher* /*w*/, void* data);
 
 private:

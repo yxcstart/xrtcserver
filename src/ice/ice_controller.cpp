@@ -15,6 +15,18 @@ void IceController::add_connection(IceConnection* conn) {
     _unpinged_connections.insert(conn);
 }
 
+void IceController::on_connection_destroyed(IceConnection* conn) {
+    _pinged_connections.erase(conn);
+    _unpinged_connections.erase(conn);
+
+    auto iter = _connections.begin();
+    for (; iter != _connections.end(); ++iter) {
+        if (*iter == conn) {
+            _connections.erase(iter);
+        }
+    }
+}
+
 bool IceController::has_pingable_connection() {
     for (auto conn : _connections) {
         if (_is_pingable(conn)) {
