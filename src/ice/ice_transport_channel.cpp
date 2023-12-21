@@ -184,6 +184,7 @@ void IceTransportChannel::_maybe_start_pinging() {
 }
 
 void IceTransportChannel::_on_check_and_ping() {
+    // icetransport channel 选了一个conn之后，将 channel ping周期改成480ms
     auto result = _ice_controller->select_connection_to_ping(_last_ping_sent_ms - PING_INTERVAL_DIFF);
     RTC_LOG(LS_WARNING) << "===========conn: " << result.conn << ", ping interval: " << result.ping_interval;
 

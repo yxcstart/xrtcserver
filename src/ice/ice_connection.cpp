@@ -113,6 +113,8 @@ void IceConnection::received_ping_response(int rtt) {
         _rtt = rtt;
     }
 
+    ++_rtt_samples;
+
     _last_ping_response_received = rtc::TimeMillis();
     _pings_since_last_response.clear();
     update_receiving(_last_ping_response_received);
@@ -143,7 +145,7 @@ void IceConnection::fail_and_destroy() {
 }
 
 void IceConnection::destroy() {
-    RTC_LOG(LS_INFO) << to_string() << ": Connection destoryed";
+    RTC_LOG(LS_INFO) << to_string() << ": Connection destroyed";
     signal_connection_destroy(this);
     delete this;
 }
@@ -155,7 +157,7 @@ void IceConnection::on_connection_request_error_response(ConnectionRequest* requ
                         << ", id=" << rtc::hex_encode(msg->transaction_id()) << ", rtt=" << rtt
                         << ", code=" << error_code;
     if (STUN_ERROR_UNAUTHORIZED == error_code || STUN_ERROR_UNKNOWN_ATTRIBUTE == error_code ||
-        STUN_ERROR_SERVER_ERROR) {
+        STUN_ERROR_SERVER_ERROR == error_code) {
         // retry maybe recover
     } else {
         fail_and_destroy();
@@ -261,12 +263,21 @@ void IceConnection::maybe_set_remote_ice_params(const IceParameters& ice_params)
     }
 }
 
-bool IceConnection::stable(int64_t now) const {
-    // todo
-    return false;
+bool IceConnection::stable(int64_t now) const { return _rtt_samples > RTT_RATIO + 1 && !_miss_response(now); }
+
+bool IceConnection::_miss_response(int64_t now) const {
+    if (_pings_since_last_response.empty()) {
+        // 所有的ping都响应了
+        return false;
+    }
+
+    int waiting = now - _pings_since_last_response[0].sent_time;
+    return waiting > 2 * _rtt;  // 超过两个rtt，没有响应
 }
 
 void IceConnection::ping(int64_t now) {
+    _last_ping_sent = now;
+
     ConnectionRequest* request = new ConnectionRequest(this);
     _pings_since_last_response.push_back(SentPing(request->id(), now));
     RTC_LOG(LS_INFO) << to_string() << ": Sending STUN ping, id=" << rtc::hex_encode(request->id());
@@ -275,7 +286,7 @@ void IceConnection::ping(int64_t now) {
     _num_pings_sent++;
 }
 
-std::string IceConnection::to_string() {
+std::string IceConnection::to_string() const {
     std::stringstream ss;
     ss << "Conn[" << this << ":" << _port->transport_name() << ":" << _port->component() << ":"
        << _port->local_addr().ToString() << "->" << _remote_candidate.address.ToString();

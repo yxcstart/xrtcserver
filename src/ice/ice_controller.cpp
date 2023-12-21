@@ -28,15 +28,17 @@ void IceController::on_connection_destroyed(IceConnection* conn) {
 }
 
 bool IceController::has_pingable_connection() {
+    int64_t now = rtc::TimeMillis();
     for (auto conn : _connections) {
-        if (_is_pingable(conn)) {
+        if (_is_pingable(conn, now)) {
             return true;
         }
     }
     return false;
 }
 
-bool IceController::_is_pingable(IceConnection* conn) {
+// 指定conn是否可ping
+bool IceController::_is_pingable(IceConnection* conn, int64_t now) {
     const Candidate& remote = conn->remote_candidate();
     // client发送answer和联通性检查的时候，是并行的，谁先到达服务器不确定，如果联通性检查请求先到达服务器，服务器根据peer反射的candidate创建ice
     // connection，但是这个时候answer还没有到服务器，也就没有ufrag和pwd，联通性检查也没办法进行
@@ -50,7 +52,8 @@ bool IceController::_is_pingable(IceConnection* conn) {
         return true;
     }
 
-    return false;
+    return _is_connection_past_ping_interval(conn, now);
+    // return false;
 }
 
 PingResult IceController::select_connection_to_ping(int64_t last_ping_sent_ms) {
@@ -62,6 +65,7 @@ PingResult IceController::select_connection_to_ping(int64_t last_ping_sent_ms) {
         }
     }
 
+    // icetransport channel 选了一个conn之后，将 channel ping周期改成480ms
     int ping_interval = (_weak() || need_ping_more_at_weak) ? WEAK_PING_INTERVAL : STRONG_PING_INTERVAL;
 
     int64_t now = rtc::TimeMillis();
@@ -73,6 +77,7 @@ PingResult IceController::select_connection_to_ping(int64_t last_ping_sent_ms) {
     return PingResult(conn, ping_interval);
 }
 
+// 这个方法由ice transport channel驱动，周期是480ms
 const IceConnection* IceController::_find_next_pingable_connection(int64_t now) {
     if (_selected_connection && _selected_connection->writable() &&
         _is_connection_past_ping_interval(_selected_connection, now)) {
@@ -81,7 +86,7 @@ const IceConnection* IceController::_find_next_pingable_connection(int64_t now) 
 
     bool has_pingable = false;
     for (auto conn : _unpinged_connections) {
-        if (_is_pingable(conn)) {
+        if (_is_pingable(conn, now)) {
             has_pingable = true;
             break;
         }
@@ -94,6 +99,10 @@ const IceConnection* IceController::_find_next_pingable_connection(int64_t now) 
 
     IceConnection* find_conn = nullptr;
     for (auto conn : _unpinged_connections) {
+        if (!_is_pingable(conn, now)) {
+            continue;
+        }
+
         if (_more_pingable(conn, find_conn)) {
             find_conn = conn;
         }
@@ -118,21 +127,26 @@ bool IceController::_more_pingable(IceConnection* conn1, IceConnection* conn2) {
     return false;
 }
 
+// 这个条件满足需要900ms
 bool IceController::_is_connection_past_ping_interval(const IceConnection* conn, int64_t now) {
     int interval = _get_connection_ping_interval(conn, now);
+    // RTC_LOG(LS_INFO) << "========conn: " << conn->to_string() << " ping_interval: " << interval
+    //                  << ", last_ping_sent: " << conn->last_ping_sent();
+    // RTC_LOG(LS_INFO) << "========_is_connection_past_ping_interval res: " << (now >= conn->last_ping_sent() +
+    // interval);
     return now >= conn->last_ping_sent() + interval;
 }
 
 int IceController::_get_connection_ping_interval(const IceConnection* conn, int64_t now) {
     if (conn->num_pings_sent() < MIN_PINGS_AT_WEAK_PING_INTERVAL) {
-        return WEAK_PING_INTERVAL;
+        return WEAK_PING_INTERVAL;  // 48ms
     }
 
     if (_weak() || !conn->stable(now)) {
-        return STABLING_CONNECTION_PING_INTERVAL;
+        return STABLING_CONNECTION_PING_INTERVAL;  // 900ms
     }
 
-    return STABLE_CONNECTION_PING_INTERVAL;
+    return STABLE_CONNECTION_PING_INTERVAL;  // 2500ms
 }
 
 int IceController::_compare_connections(IceConnection* a, IceConnection* b) {

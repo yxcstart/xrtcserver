@@ -86,13 +86,14 @@ public:
     int64_t last_received();
     int num_pings_sent() const { return _num_pings_sent; }
 
-    std::string to_string();
+    std::string to_string() const;
 
     sigslot::signal1<IceConnection*> signal_state_change;
     sigslot::signal1<IceConnection*> signal_connection_destroy;
 
 private:
     void _on_stun_send_packet(StunRequest* request, const char* buf, size_t len);
+    bool _miss_response(int64_t now) const;
 
 private:
     EventLoop* _el;
