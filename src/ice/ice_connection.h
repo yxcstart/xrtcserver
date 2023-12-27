@@ -7,6 +7,7 @@
 #include "ice/ice_credentials.h"
 #include "ice/stun.h"
 #include "ice/stun_request.h"
+#include "ice_def.h"
 namespace xrtc {
 
 class UDPPort;
@@ -82,6 +83,8 @@ public:
     void fail_and_destroy();
     void destroy();
 
+    void update_state(int64_t now);
+
     int64_t last_ping_sent() const { return _last_ping_sent; }
     int64_t last_received();
     int num_pings_sent() const { return _num_pings_sent; }
@@ -94,6 +97,8 @@ public:
 private:
     void _on_stun_send_packet(StunRequest* request, const char* buf, size_t len);
     bool _miss_response(int64_t now) const;
+    bool _too_many_ping_fails(size_t max_pings, int rtt, int64_t now);
+    bool _too_long_without_response(int min_time, int64_t now);
 
 private:
     EventLoop* _el;

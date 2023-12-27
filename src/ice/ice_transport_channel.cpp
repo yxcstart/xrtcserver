@@ -184,6 +184,7 @@ void IceTransportChannel::_maybe_start_pinging() {
 }
 
 void IceTransportChannel::_on_check_and_ping() {
+    _update_connection_states();
     // icetransport channel 选了一个conn之后，将 channel ping周期改成480ms
     auto result = _ice_controller->select_connection_to_ping(_last_ping_sent_ms - PING_INTERVAL_DIFF);
     RTC_LOG(LS_WARNING) << "===========conn: " << result.conn << ", ping interval: " << result.ping_interval;
@@ -198,6 +199,14 @@ void IceTransportChannel::_on_check_and_ping() {
         _cur_ping_interval = result.ping_interval;
         _el->stop_timer(_ping_watcher);
         _el->start_timer(_ping_watcher, _cur_ping_interval * 1000);
+    }
+}
+
+void IceTransportChannel::_update_connection_states() {
+    std::vector<IceConnection*> connections = _ice_controller->connections();
+    int64_t now = rtc::TimeMillis();
+    for (auto conn : connections) {
+        conn->update_state(now);
     }
 }
 

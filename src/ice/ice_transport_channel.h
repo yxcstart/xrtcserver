@@ -44,6 +44,7 @@ private:
     void _ping_connection(IceConnection* conn);
     void _maybe_switch_selected_connection(IceConnection* conn);
     void _switch_selected_connection(IceConnection* conn);
+    void _update_connection_states();
     friend void ice_ping_cb(EventLoop* /*el*/, TimeWatcher* /*w*/, void* data);
 
 private:
