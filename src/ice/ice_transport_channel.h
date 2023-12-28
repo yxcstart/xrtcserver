@@ -31,6 +31,8 @@ public:
     std::string to_string();
 
     sigslot::signal2<IceTransportChannel*, const std::vector<Candidate>&> signal_candidate_allocate_done;
+    sigslot::signal1<IceTransportChannel*> signal_receiving_state;
+    sigslot::signal1<IceTransportChannel*> signal_writable_state;
 
 private:
     void _on_unknown_address(UDPPort* port, const rtc::SocketAddress& addr, StunMessage* msg,
@@ -45,6 +47,9 @@ private:
     void _maybe_switch_selected_connection(IceConnection* conn);
     void _switch_selected_connection(IceConnection* conn);
     void _update_connection_states();
+    void _update_state();
+    void _set_receiving(bool receiving);
+    void _set_writable(bool writable);
     friend void ice_ping_cb(EventLoop* /*el*/, TimeWatcher* /*w*/, void* data);
 
 private:
@@ -61,6 +66,8 @@ private:
     int _cur_ping_interval = WEAK_PING_INTERVAL;
     int64_t _last_ping_sent_ms = 0;
     IceConnection* _selected_connection = nullptr;
+    bool _receiving = false;
+    bool _writable = false;
 };
 }  // namespace xrtc
 

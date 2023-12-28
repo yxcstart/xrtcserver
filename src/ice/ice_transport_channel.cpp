@@ -132,7 +132,7 @@ void IceTransportChannel::_on_connection_destroyed(IceConnection* conn) {
         _switch_selected_connection(nullptr);
         _sort_connections_and_update_state();
     } else {
-        // todo
+        _update_state();
     }
 }
 
@@ -140,7 +140,44 @@ void IceTransportChannel::_on_connection_state_change(IceConnection* /*conn*/) {
 
 void IceTransportChannel::_sort_connections_and_update_state() {
     _maybe_switch_selected_connection(_ice_controller->sort_and_switch_connection());
+
+    _update_state();
+
     _maybe_start_pinging();
+}
+
+void IceTransportChannel::_set_writable(bool writable) {
+    if (_writable == writable) {
+        return;
+    }
+
+    _writable = writable;
+    RTC_LOG(LS_INFO) << to_string() << ": Change writable to " << _writable;
+    signal_writable_state(this);
+}
+
+void IceTransportChannel::_set_receiving(bool receiving) {
+    if (_receiving == receiving) {
+        return;
+    }
+
+    _receiving = receiving;
+    RTC_LOG(LS_INFO) << to_string() << ": Change receiving to " << _receiving;
+    signal_receiving_state(this);
+}
+
+void IceTransportChannel::_update_state() {
+    bool writable = _selected_connection && _selected_connection->writable();
+    _set_writable(writable);
+
+    bool receiving = false;
+    for (auto conn : _ice_controller->connections()) {
+        if (conn->receiving()) {
+            receiving = true;
+            break;
+        }
+    }
+    _set_receiving(receiving);
 }
 
 void IceTransportChannel::_maybe_switch_selected_connection(IceConnection* conn) {
