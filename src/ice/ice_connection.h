@@ -93,6 +93,7 @@ public:
 
     sigslot::signal1<IceConnection*> signal_state_change;
     sigslot::signal1<IceConnection*> signal_connection_destroy;
+    sigslot::signal4<IceConnection*, const char*, size_t, int64_t> signal_read_packet;
 
 private:
     void _on_stun_send_packet(StunRequest* request, const char* buf, size_t len);

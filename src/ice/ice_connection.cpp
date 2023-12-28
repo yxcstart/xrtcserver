@@ -263,13 +263,14 @@ void IceConnection::send_response_message(const StunMessage& response) {
                      << " addr=" << addr.ToString() << ", id=" << rtc::hex_encode(response.transaction_id());
 }
 
-void IceConnection::on_read_packet(const char* buf, size_t len, int64_t /*ts*/) {
+void IceConnection::on_read_packet(const char* buf, size_t len, int64_t ts) {
     std::unique_ptr<StunMessage> stun_msg;
     std::string remote_ufrag;
     const Candidate& remote = _remote_candidate;
 
     if (!_port->get_stun_message(buf, len, remote.address, &stun_msg, &remote_ufrag)) {
         // 这个不是stun包，可能是其它的比如dtls或者rtp包
+        signal_read_packet(this, buf, len, ts);
     } else if (!stun_msg) {
         // stun包解析空指针，有问题
     } else {

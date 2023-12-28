@@ -21,7 +21,7 @@ public:
                         IceCandidateComponent component);
     virtual ~IceTransportChannel();
 
-    std::string transport_name() { return _transport_name; }
+    const std::string& transport_name() { return _transport_name; }
     IceCandidateComponent component() { return _component; }
 
     void set_ice_params(const IceParameters& ice_params);
@@ -33,6 +33,7 @@ public:
     sigslot::signal2<IceTransportChannel*, const std::vector<Candidate>&> signal_candidate_allocate_done;
     sigslot::signal1<IceTransportChannel*> signal_receiving_state;
     sigslot::signal1<IceTransportChannel*> signal_writable_state;
+    sigslot::signal4<IceTransportChannel*, const char*, size_t, int64_t> signal_read_packet;
 
 private:
     void _on_unknown_address(UDPPort* port, const rtc::SocketAddress& addr, StunMessage* msg,
@@ -43,6 +44,7 @@ private:
     void _on_check_and_ping();
     void _on_connection_state_change(IceConnection* conn);
     void _on_connection_destroyed(IceConnection* conn);
+    void _on_read_packet(IceConnection* conn, const char* buf, size_t len, int64_t ts);
     void _ping_connection(IceConnection* conn);
     void _maybe_switch_selected_connection(IceConnection* conn);
     void _switch_selected_connection(IceConnection* conn);

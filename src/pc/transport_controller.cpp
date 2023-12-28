@@ -1,6 +1,6 @@
 #include "pc/transport_controller.h"
 #include <rtc_base/logging.h>
-
+#include "pc/dtls_transport.h"
 namespace xrtc {
 
 TransportController::TransportController(EventLoop* el, PortAllocator* allocator)
@@ -32,11 +32,23 @@ int TransportController::set_local_description(SessionDescription* desc) {
         if (td) {
             _ice_agent->set_ice_params(mid, IceCandidateComponent::RTP, IceParameters(td->ice_ufrag, td->ice_pwd));
         }
+
+        DtlsTransport* dtls = new DtlsTransport(_ice_agent->get_channel(mid, IceCandidateComponent::RTP));
+        _add_dtls_transport(dtls);
     }
 
     _ice_agent->gathering_candidate();
 
     return 0;
+}
+
+void TransportController::_add_dtls_transport(DtlsTransport* dtls) {
+    auto iter = _dtls_transport_by_name.find(dtls->transport_name());
+    if (iter != _dtls_transport_by_name.end()) {
+        delete iter->second;
+    }
+
+    _dtls_transport_by_name[dtls->transport_name()] = dtls;
 }
 
 int TransportController::set_remote_description(SessionDescription* desc) {

@@ -119,8 +119,13 @@ void IceTransportChannel::_on_unknown_address(UDPPort* port, const rtc::SocketAd
 
 void IceTransportChannel::_add_connection(IceConnection* conn) {
     conn->signal_state_change.connect(this, &IceTransportChannel::_on_connection_state_change);
-    // conn->signal_connection_destroy.connect(this,)
+    conn->signal_connection_destroy.connect(this, &IceTransportChannel::_on_connection_destroyed);
+    conn->signal_read_packet.connect(this, &IceTransportChannel::_on_read_packet);
     _ice_controller->add_connection(conn);
+}
+
+void IceTransportChannel::_on_read_packet(IceConnection* /*conn*/, const char* buf, size_t len, int64_t ts) {
+    signal_read_packet(this, buf, len, ts);
 }
 
 void IceTransportChannel::_on_connection_destroyed(IceConnection* conn) {

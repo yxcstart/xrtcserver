@@ -1,11 +1,12 @@
 #ifndef __TRANSPORT_CONTROLLER_H_
 #define __TRANSPORT_CONTROLLER_H_
 
+#include <map>
 #include "ice/ice_agent.h"
 #include "pc/session_description.h"
-
 namespace xrtc {
 
+class DtlsTransport;
 class TransportController : public sigslot::has_slots<> {
 public:
     TransportController(EventLoop* el, PortAllocator* allocator);
@@ -20,10 +21,12 @@ public:
 private:
     void on_candidate_allocate_done(IceAgent* agent, const std::string& transport_name, IceCandidateComponent component,
                                     const std::vector<Candidate>& candidates);
+    void _add_dtls_transport(DtlsTransport* dtls);
 
 private:
     EventLoop* _el;
     IceAgent* _ice_agent;
+    std::map<std::string, DtlsTransport*> _dtls_transport_by_name;
 };
 
 }  // namespace xrtc
