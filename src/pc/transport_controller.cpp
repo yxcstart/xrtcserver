@@ -34,6 +34,7 @@ int TransportController::set_local_description(SessionDescription* desc) {
         }
 
         DtlsTransport* dtls = new DtlsTransport(_ice_agent->get_channel(mid, IceCandidateComponent::RTP));
+        dtls->set_local_certificate(_local_certificate);
         _add_dtls_transport(dtls);
     }
 
@@ -41,6 +42,8 @@ int TransportController::set_local_description(SessionDescription* desc) {
 
     return 0;
 }
+
+void TransportController::set_local_certificate(rtc::RTCCertificate* cert) { _local_certificate = cert; }
 
 void TransportController::_add_dtls_transport(DtlsTransport* dtls) {
     auto iter = _dtls_transport_by_name.find(dtls->transport_name());

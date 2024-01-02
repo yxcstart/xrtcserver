@@ -39,6 +39,8 @@ public:
     const std::string& transport_name() { return _ice_channel->transport_name(); }
     IceCandidateComponent component() { return _ice_channel->component(); }
 
+    bool set_local_certificate(rtc::RTCCertificate* cert);
+
     std::string to_string();
 
 private:
@@ -57,6 +59,7 @@ private:
     rtc::RTCCertificate* _local_certificate = nullptr;
     rtc::Buffer _remote_fingerprint_value;
     std::string _remote_fingerprint_alg;
+    bool _dtls_active = false;
 };
 
 }  // namespace xrtc

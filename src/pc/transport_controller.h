@@ -14,6 +14,7 @@ public:
 
     int set_local_description(SessionDescription* desc);
     int set_remote_description(SessionDescription* desc);
+    void set_local_certificate(rtc::RTCCertificate* cert);
 
     sigslot::signal4<TransportController*, const std::string&, IceCandidateComponent, const std::vector<Candidate>&>
         signal_candidate_allocate_done;
@@ -27,6 +28,7 @@ private:
     EventLoop* _el;
     IceAgent* _ice_agent;
     std::map<std::string, DtlsTransport*> _dtls_transport_by_name;
+    rtc::RTCCertificate* _local_certificate = nullptr;
 };
 
 }  // namespace xrtc

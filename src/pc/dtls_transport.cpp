@@ -61,6 +61,25 @@ void DtlsTransport::_on_read_packet(IceTransportChannel* channel, const char* bu
     }
 }
 
+bool DtlsTransport::set_local_certificate(rtc::RTCCertificate* cert) {
+    if (_dtls_active) {
+        if (cert == _local_certificate) {
+            RTC_LOG(LS_INFO) << to_string() << ": Ingnoring identical DTLS cert";
+            return true;
+        } else {
+            RTC_LOG(LS_WARNING) << to_string() << ": Cannot change cert in this state";
+            return false;
+        }
+    }
+
+    if (cert) {
+        _local_certificate = cert;
+        _dtls_active = true;
+    }
+
+    return true;
+}
+
 bool DtlsTransport::_setup_dtls() {
     auto downward = std::make_unique<StreamInterfaceChannel>(_ice_channel);
     StreamInterfaceChannel* downward_ptr = downward.get();
