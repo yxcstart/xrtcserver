@@ -36,6 +36,7 @@ function build_rtc(){
     cp third_party/lib/libabsl_throw_delegate.a $curr_path/lib/
     cp third_party/lib/libssl.a $curr_path/lib/
     cp third_party/lib/libcrypto.a $curr_path/lib/
+    cp third_party/lib/libabsl_bad_optional_access.a $curr_path/lib/
 }
 
 function build_libev(){
