@@ -23,6 +23,7 @@ private:
     void on_candidate_allocate_done(IceAgent* agent, const std::string& transport_name, IceCandidateComponent component,
                                     const std::vector<Candidate>& candidates);
     void _add_dtls_transport(DtlsTransport* dtls);
+    DtlsTransport* _get_dtls_transport(const std::string& transport_name);
 
 private:
     EventLoop* _el;

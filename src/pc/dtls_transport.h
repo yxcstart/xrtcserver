@@ -22,6 +22,8 @@ class StreamInterfaceChannel : public rtc::StreamInterface {
 public:
     StreamInterfaceChannel(IceTransportChannel* ice_channel);
 
+    bool on_received_packet(const char* data, size_t size);
+
     rtc::StreamState GetState() const override;
     rtc::StreamResult Read(void* buffer, size_t buffer_len, size_t* read, int* error) override;
     rtc::StreamResult Write(const void* data, size_t data_len, size_t* written, int* error) override;
@@ -40,7 +42,7 @@ public:
     IceCandidateComponent component() { return _ice_channel->component(); }
 
     bool set_local_certificate(rtc::RTCCertificate* cert);
-    bool set_remote_fingerprint(const std::string& digest_alg, const char* digest, size_t digest_len);
+    bool set_remote_fingerprint(const std::string& digest_alg, const uint8_t* digest, size_t digest_len);
 
     std::string to_string();
 
@@ -50,9 +52,10 @@ public:
 private:
     void _on_read_packet(IceTransportChannel* channel, const char* buf, size_t len, int64_t ts);
     bool _setup_dtls();
-    bool _maybe_start_dtls();
+    void _maybe_start_dtls();
     void _set_dtls_state(DtlsTransportState state);
     void _set_writable_state(bool writable);
+    bool _handle_dtls_packet(const char* data, size_t size);
 
 private:
     IceTransportChannel* _ice_channel;
