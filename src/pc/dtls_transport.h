@@ -40,13 +40,19 @@ public:
     IceCandidateComponent component() { return _ice_channel->component(); }
 
     bool set_local_certificate(rtc::RTCCertificate* cert);
+    bool set_remote_fingerprint(const std::string& digest_alg, const char* digest, size_t digest_len);
 
     std::string to_string();
+
+    sigslot::signal2<DtlsTransport*, DtlsTransportState> signal_dtls_state;
+    sigslot::signal1<DtlsTransport*> signal_writable_state;
 
 private:
     void _on_read_packet(IceTransportChannel* channel, const char* buf, size_t len, int64_t ts);
     bool _setup_dtls();
     bool _maybe_start_dtls();
+    void _set_dtls_state(DtlsTransportState state);
+    void _set_writable_state(bool writable);
 
 private:
     IceTransportChannel* _ice_channel;

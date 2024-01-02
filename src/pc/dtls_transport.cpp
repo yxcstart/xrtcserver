@@ -80,6 +80,73 @@ bool DtlsTransport::set_local_certificate(rtc::RTCCertificate* cert) {
     return true;
 }
 
+bool DtlsTransport::set_remote_fingerprint(const std::string& digest_alg, const char* digest, size_t digest_len) {
+    rtc::Buffer remote_fingerprint_value(digest, digest_len);
+
+    if (_dtls_active && _remote_fingerprint_value == remote_fingerprint_value && !digest_alg.empty()) {
+        RTC_LOG(LS_INFO) << to_string() << ": Ignoring identical remote fingerprint";
+        return true;
+    }
+
+    if (digest_alg.empty()) {
+        RTC_LOG(LS_WARNING) << to_string() << ": Other sides not support DTLS";
+        _dtls_active = false;
+        return false;
+    }
+
+    if (!_dtls_active) {
+        RTC_LOG(LS_WARNING) << to_string() << ": Cannot set remote fingerpint in this state";
+        return false;
+    }
+
+    bool fingerprint_change = _remote_fingerprint_value.size() > 0u;
+    _remote_fingerprint_value = std::move(remote_fingerprint_value);
+    _remote_fingerprint_alg = digest_alg;
+
+    // ClientHello packet先到，answer sdp后到
+    if (_dtls && !fingerprint_change) {
+        rtc::SSLPeerCertificateDigestError err;
+        if (!_dtls->SetPeerCertificateDigest(digest_alg, (const unsigned char*)digest, digest_len, &err)) {
+            RTC_LOG(LS_WARNING) << to_string() << ": Failed to set peer certificate digest";
+            _set_dtls_state(DtlsTransportState::k_failed);
+            return err == rtc::SSLPeerCertificateDigestError::VERIFICATION_FAILED;
+        }
+    }
+
+    if (_dtls && fingerprint_change) {
+        _dtls.reset(nullptr);
+        _set_dtls_state(DtlsTransportState::k_new);
+        _set_writable_state(false);
+    }
+
+    if (!_setup_dtls()) {
+        RTC_LOG(LS_WARNING) << to_string() << ": Failed to setup DTLS";
+        _set_dtls_state(DtlsTransportState::k_failed);
+        return false;
+    }
+
+    return true;
+}
+
+void DtlsTransport::_set_dtls_state(DtlsTransportState state) {
+    if (_dtls_state == state) {
+        return;
+    }
+    RTC_LOG(LS_INFO) << to_string() << ": Change dtls state from " << _dtls_state << "to " << state;
+
+    _dtls_state = state;
+    signal_dtls_state(this, state);
+}
+
+void DtlsTransport::_set_writable_state(bool writable) {
+    if (_writable == writable) {
+        return;
+    }
+    RTC_LOG(LS_INFO) << to_string() << ": set DTLS writable to " << writable;
+    _writable = writable;
+    signal_writable_state(this);
+}
+
 bool DtlsTransport::_setup_dtls() {
     auto downward = std::make_unique<StreamInterfaceChannel>(_ice_channel);
     StreamInterfaceChannel* downward_ptr = downward.get();
