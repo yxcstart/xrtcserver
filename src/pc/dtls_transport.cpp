@@ -82,6 +82,7 @@ void StreamInterfaceChannel::Close() {
 DtlsTransport::DtlsTransport(IceTransportChannel* channel) : _ice_channel(channel) {
     _ice_channel->signal_read_packet.connect(this, &DtlsTransport::_on_read_packet);
     _ice_channel->signal_writable_state.connect(this, &DtlsTransport::_on_writable_state);
+    _ice_channel->signal_receiving_state.connect(this, &DtlsTransport::_on_receiving_state);
 
     webrtc::CryptoOptions crypto_options;
     _srtp_ciphers = crypto_options.GetSupportedDtlsSrtpCryptoSuites();
@@ -157,6 +158,17 @@ void DtlsTransport::_on_writable_state(IceTransportChannel* channel) {
         default:
             break;
     }
+}
+
+void DtlsTransport::_on_receiving_state(IceTransportChannel* channel) { _set_receiving(channel->receiving()); }
+
+void DtlsTransport::_set_receiving(bool receiving) {
+    if (_receiving == receiving) {
+        return;
+    }
+    RTC_LOG(LS_INFO) << to_string() << ": Change receiving to " << receiving;
+    _receiving = receiving;
+    signal_receiving_state(this);
 }
 
 bool DtlsTransport::set_local_certificate(rtc::RTCCertificate* cert) {
