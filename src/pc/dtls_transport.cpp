@@ -57,9 +57,19 @@ rtc::StreamResult StreamInterfaceChannel::Read(void* buffer, size_t buffer_len, 
     return rtc::SR_SUCCESS;
 }
 
-rtc::StreamResult StreamInterfaceChannel::Write(const void* data, size_t data_len, size_t* written, int* error) {}
+rtc::StreamResult StreamInterfaceChannel::Write(const void* data, size_t data_len, size_t* written, int* error) {
+    _ice_channel->send_packet((const char*)data, data_len);
+    if (written) {
+        *written = data_len;
+    }
 
-void StreamInterfaceChannel::Close() {}
+    return rtc::SR_SUCCESS;
+}
+
+void StreamInterfaceChannel::Close() {
+    _state = rtc::SS_CLOSED;
+    _packets.Clear();
+}
 
 DtlsTransport::DtlsTransport(IceTransportChannel* channel) : _ice_channel(channel) {
     _ice_channel->signal_read_packet.connect(this, &DtlsTransport::_on_read_packet);
@@ -88,6 +98,18 @@ void DtlsTransport::_on_read_packet(IceTransportChannel* channel, const char* bu
             } else {
                 RTC_LOG(LS_WARNING) << to_string() << ": Not a DTLS ClientHello packet, "
                                     << "dropping";
+            }
+
+            break;
+        case DtlsTransportState::k_connecting:
+        case DtlsTransportState::k_connected:
+            if (is_dtls_packet(buf, len)) {
+                if (!_handle_dtls_packet(buf, len)) {
+                    RTC_LOG(LS_WARNING) << to_string() << ": handle DTLS packet failed";
+                    return;
+                }
+            } else {  // RTP/RTCP包
+                // todo
             }
 
             break;

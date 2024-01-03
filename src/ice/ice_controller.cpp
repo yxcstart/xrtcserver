@@ -185,7 +185,7 @@ int IceController::_compare_connections(IceConnection* a, IceConnection* b) {
     return 0;
 }
 
-bool IceController::_ready_to_send(IceConnection* conn) {
+bool IceController::ready_to_send(IceConnection* conn) {
     return conn && (conn->writable() || conn->write_state() == IceConnection::STATE_WRITE_UNRELIABLE);
 }
 
@@ -205,7 +205,7 @@ IceConnection* IceController::sort_and_switch_connection() {
     }
 
     IceConnection* top_connection = _connections.empty() ? nullptr : _connections[0];
-    if (!_ready_to_send(top_connection) || _selected_connection == top_connection) {
+    if (!ready_to_send(top_connection) || _selected_connection == top_connection) {
         return nullptr;
     }
 

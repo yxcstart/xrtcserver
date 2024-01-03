@@ -257,6 +257,19 @@ void IceTransportChannel::_ping_connection(IceConnection* conn) {
     conn->ping(_last_ping_sent_ms);
 }
 
+int IceTransportChannel::send_packet(const char* data, size_t len) {
+    if (!_ice_controller->ready_to_send(_selected_connection)) {
+        RTC_LOG(LS_WARNING) << to_string() << ": Selected connection not ready to send.";
+        return -1;
+    }
+
+    int sent = _selected_connection->send_packet(data, len);
+    if (sent <= 0) {
+        RTC_LOG(LS_WARNING) << to_string() << ": Selected connection send failed.";
+    }
+    return sent;
+}
+
 std::string IceTransportChannel::to_string() {
     std::stringstream ss;
     ss << "Channel[" << this << ":" << _transport_name << ":" << _component << "]";

@@ -84,7 +84,7 @@ public:
     void destroy();
 
     void update_state(int64_t now);
-
+    int send_packet(const char* data, size_t len);
     int64_t last_ping_sent() const { return _last_ping_sent; }
     int64_t last_received();
     int num_pings_sent() const { return _num_pings_sent; }
