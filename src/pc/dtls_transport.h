@@ -31,6 +31,8 @@ public:
 
 private:
     IceTransportChannel* _ice_channel;
+    rtc::BufferQueue _packets;
+    rtc::StreamState _state = rtc::SS_OPEN;
 };
 
 class DtlsTransport : public sigslot::has_slots<> {
@@ -56,6 +58,7 @@ private:
     void _set_dtls_state(DtlsTransportState state);
     void _set_writable_state(bool writable);
     bool _handle_dtls_packet(const char* data, size_t size);
+    void _on_writable_state(IceTransportChannel* channel);
 
 private:
     IceTransportChannel* _ice_channel;
