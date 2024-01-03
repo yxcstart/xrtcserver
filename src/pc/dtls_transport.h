@@ -13,7 +13,7 @@ enum class DtlsTransportState {
     k_new,
     k_connecting,
     k_connected,
-    k_close,
+    k_closed,
     k_failed,
     k_num_values,
 };
@@ -50,9 +50,13 @@ public:
 
     sigslot::signal2<DtlsTransport*, DtlsTransportState> signal_dtls_state;
     sigslot::signal1<DtlsTransport*> signal_writable_state;
+    sigslot::signal4<DtlsTransport*, const char*, size_t, int64_t> signal_read_packet;
+    sigslot::signal1<DtlsTransport*> signal_closed;
 
 private:
     void _on_read_packet(IceTransportChannel* channel, const char* buf, size_t len, int64_t ts);
+    void _on_dtls_event(rtc::StreamInterface* dtls, int sig, int error);
+    void _on_dtls_handshake_error(rtc::SSLHandshakeError error);
     bool _setup_dtls();
     void _maybe_start_dtls();
     void _set_dtls_state(DtlsTransportState state);
@@ -72,6 +76,7 @@ private:
     rtc::Buffer _remote_fingerprint_value;
     std::string _remote_fingerprint_alg;
     bool _dtls_active = false;
+    std::vector<int> _srtp_ciphers;
 };
 
 }  // namespace xrtc
