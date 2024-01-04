@@ -121,6 +121,9 @@ void IceTransportChannel::_add_connection(IceConnection* conn) {
     conn->signal_state_change.connect(this, &IceTransportChannel::_on_connection_state_change);
     conn->signal_connection_destroy.connect(this, &IceTransportChannel::_on_connection_destroyed);
     conn->signal_read_packet.connect(this, &IceTransportChannel::_on_read_packet);
+
+    _had_connection = true;
+
     _ice_controller->add_connection(conn);
 }
 
@@ -156,6 +159,10 @@ void IceTransportChannel::_set_writable(bool writable) {
         return;
     }
 
+    if (writable) {
+        _has_been_connection = true;
+    }
+
     _writable = writable;
     RTC_LOG(LS_INFO) << to_string() << ": Change writable to " << _writable;
     signal_writable_state(this);
@@ -183,6 +190,40 @@ void IceTransportChannel::_update_state() {
         }
     }
     _set_receiving(receiving);
+
+    IceTransportState state = _compute_ice_transport_state();
+    if (state != _state) {
+        _state = state;
+        signal_ice_state_changed(this);
+    }
+}
+
+IceTransportState IceTransportChannel::_compute_ice_transport_state() {
+    bool has_connection = false;
+    for (auto conn : _ice_controller->connections()) {
+        if (conn->active()) {
+            has_connection = true;
+            break;
+        }
+    }
+
+    if (_had_connection && !has_connection) {
+        return IceTransportState::k_failed;
+    }
+
+    if (_has_been_connection && !writable()) {
+        return IceTransportState::k_disconnected;
+    }
+
+    if (!_had_connection && !has_connection) {
+        return IceTransportState::k_new;
+    }
+
+    if (has_connection && !writable()) {
+        return IceTransportState::k_checking;
+    }
+
+    return IceTransportState::k_connected;
 }
 
 void IceTransportChannel::_maybe_switch_selected_connection(IceConnection* conn) {

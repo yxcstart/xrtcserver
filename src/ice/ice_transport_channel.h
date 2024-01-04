@@ -15,6 +15,16 @@
 
 namespace xrtc {
 
+enum class IceTransportState {
+    k_new,
+    k_checking,
+    k_connected,
+    k_completed,
+    k_failed,
+    k_disconnected,
+    k_closed,
+};
+
 class IceTransportChannel : public sigslot::has_slots<> {
 public:
     IceTransportChannel(EventLoop* el, PortAllocator* allocator, const std::string& transport_name,
@@ -26,6 +36,7 @@ public:
 
     bool writable() { return _writable; }
     bool receiving() { return _receiving; }
+    IceTransportState state() { return _state; }
 
     void set_ice_params(const IceParameters& ice_params);
     void set_remote_ice_params(const IceParameters& ice_params);
@@ -37,6 +48,7 @@ public:
     sigslot::signal2<IceTransportChannel*, const std::vector<Candidate>&> signal_candidate_allocate_done;
     sigslot::signal1<IceTransportChannel*> signal_receiving_state;
     sigslot::signal1<IceTransportChannel*> signal_writable_state;
+    sigslot::signal1<IceTransportChannel*> signal_ice_state_changed;
     sigslot::signal4<IceTransportChannel*, const char*, size_t, int64_t> signal_read_packet;
 
 private:
@@ -56,6 +68,8 @@ private:
     void _update_state();
     void _set_receiving(bool receiving);
     void _set_writable(bool writable);
+    IceTransportState _compute_ice_transport_state();
+
     friend void ice_ping_cb(EventLoop* /*el*/, TimeWatcher* /*w*/, void* data);
 
 private:
@@ -74,6 +88,9 @@ private:
     IceConnection* _selected_connection = nullptr;
     bool _receiving = false;
     bool _writable = false;
+    IceTransportState _state = IceTransportState::k_new;
+    bool _had_connection = false;
+    bool _has_been_connection = false;
 };
 }  // namespace xrtc
 
