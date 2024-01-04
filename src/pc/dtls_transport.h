@@ -48,6 +48,8 @@ public:
 
     std::string to_string();
 
+    DtlsTransportState dtls_state() { return _dtls_state; }
+
     sigslot::signal2<DtlsTransport*, DtlsTransportState> signal_dtls_state;
     sigslot::signal1<DtlsTransport*> signal_writable_state;
     sigslot::signal1<DtlsTransport*> signal_receiving_state;
