@@ -37,9 +37,16 @@ PushStream* RtcStreamManager::find_push_stream(const std::string& stream_name) {
 }
 
 void RtcStreamManager::remove_push_stream(RtcStream* stream) {
-    const std::string& stream_name = stream->get_stream_name();
+    if (!stream) {
+        return;
+    }
+
+    remove_push_stream(stream->get_uid(), stream->get_stream_name());
+}
+
+void RtcStreamManager::remove_push_stream(uint64_t uid, const std::string& stream_name) {
     PushStream* push_stream = find_push_stream(stream_name);
-    if (push_stream) {
+    if (push_stream && uid == push_stream->get_uid()) {
         _push_streams.erase(stream_name);
         delete push_stream;
     }
@@ -66,6 +73,8 @@ int RtcStreamManager::set_answer(uint64_t uid, const std::string& stream_name, c
     }
     return 0;
 }
+
+int RtcStreamManager::stop_push(uint64_t uid, const std::string& stream_name) { remove_push_stream(uid, stream_name); }
 
 void RtcStreamManager::on_connection_state(RtcStream* stream, PeerConnectionState state) {
     if (state == PeerConnectionState::k_failed) {

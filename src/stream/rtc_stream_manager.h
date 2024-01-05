@@ -21,8 +21,10 @@ public:
                            rtc::RTCCertificate* certificate, std::string& offer);
     int set_answer(uint64_t uid, const std::string& stream_name, const std::string& answer,
                    const std::string& stream_type, uint32_t log_id);
+    int stop_push(uint64_t uid, const std::string& stream_name);
     PushStream* find_push_stream(const std::string& stream_name);
     void remove_push_stream(RtcStream* stream);
+    void remove_push_stream(uint64_t uid, const std::string& stream_name);
 
     void on_connection_state(RtcStream* stream, PeerConnectionState state) override;
 

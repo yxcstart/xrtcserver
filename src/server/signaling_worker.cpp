@@ -370,6 +370,9 @@ int SignalingWorker::_process_request(TcpConnection* c, const rtc::Slice& header
     switch (cmdno) {
         case CMDNO_PUSH:
             return _process_push(cmdno, c, root, xh->log_id);
+        case CMDNO_STOPPUSH:
+            ret = _process_stop_push(cmdno, c, root, xh->log_id);
+            break;
         case CMDNO_ANSWER:
             ret = _process_answer(cmdno, c, root, xh->log_id);
             break;
@@ -436,6 +439,30 @@ int SignalingWorker::_process_push(int cmdno, TcpConnection* c, const Json::Valu
     msg->worker = this;
     msg->conn = c;
     msg->fd = c->fd;
+
+    return g_rtc_server->send_rtc_msg(msg);
+}
+
+int SignalingWorker::_process_stop_push(int cmdno, TcpConnection* c, const Json::Value& root, uint32_t log_id) {
+    uint64_t uid;
+    std::string stream_name;
+
+    try {
+        uid = root["uid"].asUInt64();
+        stream_name = root["stream_name"].asString();
+    } catch (Json::Exception e) {
+        RTC_LOG(LS_WARNING) << "parse json body error: " << e.what() << "log_id: " << log_id;
+        return -1;
+    }
+
+    RTC_LOG(LS_INFO) << "cmdno[" << cmdno << "] uid[" << uid << "] stream_name[" << stream_name
+                     << "] signaling server send stop push request";
+
+    std::shared_ptr<RtcMsg> msg = std::make_shared<RtcMsg>();
+    msg->cmdno = cmdno;
+    msg->uid = uid;
+    msg->stream_name = stream_name;
+    msg->log_id = log_id;
 
     return g_rtc_server->send_rtc_msg(msg);
 }
