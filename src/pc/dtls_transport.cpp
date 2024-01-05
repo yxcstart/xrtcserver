@@ -49,7 +49,7 @@ bool StreamInterfaceChannel::on_received_packet(const char* data, size_t size) {
 
 rtc::StreamState StreamInterfaceChannel::GetState() const { return _state; }
 
-rtc::StreamResult StreamInterfaceChannel::Read(void* buffer, size_t buffer_len, size_t* read, int* error) {
+rtc::StreamResult StreamInterfaceChannel::Read(void* buffer, size_t buffer_len, size_t* read, int* /*error*/) {
     if (_state == rtc::SS_CLOSED) {
         return rtc::SR_EOS;
     }
@@ -65,7 +65,7 @@ rtc::StreamResult StreamInterfaceChannel::Read(void* buffer, size_t buffer_len, 
     return rtc::SR_SUCCESS;
 }
 
-rtc::StreamResult StreamInterfaceChannel::Write(const void* data, size_t data_len, size_t* written, int* error) {
+rtc::StreamResult StreamInterfaceChannel::Write(const void* data, size_t data_len, size_t* written, int* /*error*/) {
     _ice_channel->send_packet((const char*)data, data_len);
     if (written) {
         *written = data_len;
@@ -90,7 +90,7 @@ DtlsTransport::DtlsTransport(IceTransportChannel* channel) : _ice_channel(channe
 
 DtlsTransport::~DtlsTransport() {}
 
-void DtlsTransport::_on_read_packet(IceTransportChannel* channel, const char* buf, size_t len, int64_t ts) {
+void DtlsTransport::_on_read_packet(IceTransportChannel* /*channel*/, const char* buf, size_t len, int64_t ts) {
     // RTC_LOG(LS_INFO) << "=============DTLS packet: " << len;
     switch (_dtls_state) {
         case DtlsTransportState::k_new:
@@ -136,6 +136,9 @@ void DtlsTransport::_on_read_packet(IceTransportChannel* channel, const char* bu
                 signal_read_packet(this, buf, len, ts);
             }
 
+            break;
+
+        default:
             break;
     }
 }
@@ -300,7 +303,7 @@ bool DtlsTransport::_setup_dtls() {
     return true;
 }
 
-void DtlsTransport::_on_dtls_event(rtc::StreamInterface* dtls, int sig, int error) {
+void DtlsTransport::_on_dtls_event(rtc::StreamInterface* /*dtls*/, int sig, int error) {
     if (sig & rtc::SE_OPEN) {
         RTC_LOG(LS_INFO) << to_string() << ": DTLS handshake complete.";
         _set_writable_state(true);

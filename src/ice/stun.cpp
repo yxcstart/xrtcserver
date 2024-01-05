@@ -396,7 +396,7 @@ StunAddressFamily StunAddressAttribute::family() {
     }
 }
 
-bool StunAddressAttribute::read(rtc::ByteBufferReader* buf) { return true; }
+bool StunAddressAttribute::read(rtc::ByteBufferReader* /*buf*/) { return true; }
 
 bool StunAddressAttribute::write(rtc::ByteBufferWriter* buf) {
     StunAddressFamily stun_family = family();
@@ -576,7 +576,7 @@ void StunErrorCodeAttribute::set_reason(const std::string& reason) {
     set_length(MIN_SIZE + reason.size());
 }
 
-bool StunErrorCodeAttribute::read(rtc::ByteBufferReader* buf) { return false; }
+bool StunErrorCodeAttribute::read(rtc::ByteBufferReader* /*buf*/) { return false; }
 
 bool StunErrorCodeAttribute::write(rtc::ByteBufferWriter* buf) {
     buf->WriteUInt32(_class << 8 | _number);

@@ -443,14 +443,14 @@ int SignalingWorker::_process_push(int cmdno, TcpConnection* c, const Json::Valu
     return g_rtc_server->send_rtc_msg(msg);
 }
 
-int SignalingWorker::_process_stop_push(int cmdno, TcpConnection* c, const Json::Value& root, uint32_t log_id) {
+int SignalingWorker::_process_stop_push(int cmdno, TcpConnection* /*c*/, const Json::Value& root, uint32_t log_id) {
     uint64_t uid;
     std::string stream_name;
 
     try {
         uid = root["uid"].asUInt64();
         stream_name = root["stream_name"].asString();
-    } catch (Json::Exception e) {
+    } catch (Json::Exception& e) {
         RTC_LOG(LS_WARNING) << "parse json body error: " << e.what() << "log_id: " << log_id;
         return -1;
     }

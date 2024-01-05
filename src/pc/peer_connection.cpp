@@ -30,8 +30,8 @@ PeerConnection::~PeerConnection() {
     RTC_LOG(LS_INFO) << "PeerConnection destroy";
 }
 
-void PeerConnection::on_candidate_allocate_done(TransportController* transport_controller,
-                                                const std::string& transport_name, IceCandidateComponent component,
+void PeerConnection::on_candidate_allocate_done(TransportController* /*transport_controller*/,
+                                                const std::string& transport_name, IceCandidateComponent /*component*/,
                                                 const std::vector<Candidate>& candidates) {
     for (auto c : candidates) {
         RTC_LOG(LS_INFO) << "candidate gathered, transport_name: " << transport_name << ", " << c.to_string();

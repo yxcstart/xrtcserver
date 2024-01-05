@@ -90,7 +90,7 @@ int UDPPort::send_to(const char* buf, size_t len, const rtc::SocketAddress& addr
     return _async_socket->send_to(buf, len, addr);
 }
 
-void UDPPort::_on_read_packet(AsyncUdpSocket* socket, char* buf, size_t size, const rtc::SocketAddress& addr,
+void UDPPort::_on_read_packet(AsyncUdpSocket* /*socket*/, char* buf, size_t size, const rtc::SocketAddress& addr,
                               int64_t ts) {
     // 第二次以及之后的stun msg处理
     if (IceConnection* conn = get_connection(addr)) {
