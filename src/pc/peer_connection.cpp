@@ -20,6 +20,7 @@ static RtpDirection get_direction(bool send, bool recv) {
 PeerConnection::PeerConnection(EventLoop* el, PortAllocator* allocator)
     : _el(el), _transport_controller(new TransportController(el, allocator)) {
     _transport_controller->signal_candidate_allocate_done.connect(this, &PeerConnection::on_candidate_allocate_done);
+    _transport_controller->signal_connection_state.connect(this, &PeerConnection::_on_connection_state);
 }
 PeerConnection::~PeerConnection() {}
 
@@ -38,6 +39,10 @@ void PeerConnection::on_candidate_allocate_done(TransportController* transport_c
     if (content) {
         content->add_candidates(candidates);
     }
+}
+
+void PeerConnection::_on_connection_state(TransportController*, PeerConnectionState state) {
+    signal_connection_state(this, state);
 }
 
 int PeerConnection::init(rtc::RTCCertificate* certificate) {

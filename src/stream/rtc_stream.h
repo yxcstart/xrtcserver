@@ -9,7 +9,7 @@
 
 namespace xrtc {
 
-class RtcStream {
+class RtcStream : public sigslot::has_slots<> {
 public:
     RtcStream(EventLoop* el, PortAllocator* allocator, uint64_t uid, const std::string& stream_name, bool audio,
               bool video, uint32_t log_id);
@@ -21,6 +21,9 @@ public:
 
     virtual std::string create_offer() = 0;
 
+private:
+    void _on_connection_state(PeerConnection*, PeerConnectionState);
+
 protected:
     EventLoop* el;
     uint64_t uid;
@@ -30,6 +33,7 @@ protected:
     uint32_t log_id;
 
     std::unique_ptr<PeerConnection> pc;
+    PeerConnectionState _state = PeerConnectionState::k_new;
 
     friend class RtcStreamManager;
 };

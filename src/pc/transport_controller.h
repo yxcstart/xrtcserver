@@ -30,6 +30,7 @@ private:
     void _on_dtls_receiving_state(DtlsTransport*);
     void _on_dtls_wriatble_state(DtlsTransport*);
     void _on_dtls_state(DtlsTransport*, DtlsTransportState);
+    void _on_ice_state(IceAgent*, IceTransportState);
     void _update_state();
     void _add_dtls_transport(DtlsTransport* dtls);
     DtlsTransport* _get_dtls_transport(const std::string& transport_name);

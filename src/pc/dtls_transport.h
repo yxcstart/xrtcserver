@@ -42,6 +42,7 @@ public:
 
     const std::string& transport_name() { return _ice_channel->transport_name(); }
     IceCandidateComponent component() { return _ice_channel->component(); }
+    IceTransportChannel* ice_channel() { return _ice_channel; }
 
     bool set_local_certificate(rtc::RTCCertificate* cert);
     bool set_remote_fingerprint(const std::string& digest_alg, const uint8_t* digest, size_t digest_len);
