@@ -23,18 +23,20 @@ struct RTCOfferAnswerOptions {
 class PeerConnection : public sigslot::has_slots<> {
 public:
     PeerConnection(EventLoop* el, PortAllocator* allocator);
-    ~PeerConnection();
 
     int init(rtc::RTCCertificate* certificate);
+    void destroy();
     std::string create_offer(const RTCOfferAnswerOptions& options);
     int set_remote_sdp(const std::string& sdp);
 
     sigslot::signal2<PeerConnection*, PeerConnectionState> signal_connection_state;
 
 private:
+    ~PeerConnection();
     void on_candidate_allocate_done(TransportController* transport_controller, const std::string& transport_name,
                                     IceCandidateComponent component, const std::vector<Candidate>& candidates);
     void _on_connection_state(TransportController*, PeerConnectionState state);
+    friend void destroy_timer_cb(EventLoop* /*el*/, TimeWatcher* /*w*/, void* data);
 
 private:
     EventLoop* _el;
@@ -42,6 +44,7 @@ private:
     std::unique_ptr<SessionDescription> _remote_desc;
     rtc::RTCCertificate* _certificate = nullptr;
     std::unique_ptr<TransportController> _transport_controller;
+    TimeWatcher* _destory_timer = nullptr;
 };
 
 }  // namespace xrtc

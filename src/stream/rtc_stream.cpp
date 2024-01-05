@@ -14,18 +14,27 @@ RtcStream::RtcStream(EventLoop* el, PortAllocator* allocator, uint64_t uid, cons
     pc->signal_connection_state.connect(this, &RtcStream::_on_connection_state);
 }
 
-RtcStream::~RtcStream() {}
+RtcStream::~RtcStream() { pc->destroy(); }
 
 void RtcStream::_on_connection_state(PeerConnection*, PeerConnectionState state) {
     if (_state == state) {
         return;
     }
-    RTC_LOG(LS_INFO) << "PeerConnectionState change from " << _state << " to " << state;
+    RTC_LOG(LS_INFO) << to_string() << ": PeerConnectionState change from " << _state << " to " << state;
     _state = state;
+
+    if (_listener) {
+        _listener->on_connection_state(this, state);
+    }
 }
 
 int RtcStream::start(rtc::RTCCertificate* certificate) { return pc->init(certificate); }
 
 int RtcStream::set_remote_sdp(const std::string& sdp) { return pc->set_remote_sdp(sdp); }
 
+std::string RtcStream::to_string() {
+    std::stringstream ss;
+    ss << "Stream[" << this << "|" << uid << "|" << stream_name << "]";
+    return ss.str();
+}
 }  // namespace xrtc

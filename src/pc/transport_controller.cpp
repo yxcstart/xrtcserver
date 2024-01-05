@@ -8,7 +8,17 @@ TransportController::TransportController(EventLoop* el, PortAllocator* allocator
     _ice_agent->signal_candidate_allocate_done.connect(this, &TransportController::on_candidate_allocate_done);
 }
 
-TransportController::~TransportController() {}
+TransportController::~TransportController() {
+    for (auto dtls : _dtls_transport_by_name) {
+        delete dtls.second;
+    }
+    _dtls_transport_by_name.clear();
+
+    if (_ice_agent) {
+        delete _ice_agent;
+        _ice_agent = nullptr;
+    }
+}
 
 void TransportController::on_candidate_allocate_done(IceAgent* agent, const std::string& transport_name,
                                                      IceCandidateComponent component,

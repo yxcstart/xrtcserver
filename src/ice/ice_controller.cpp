@@ -23,6 +23,7 @@ void IceController::on_connection_destroyed(IceConnection* conn) {
     for (; iter != _connections.end(); ++iter) {
         if (*iter == conn) {
             _connections.erase(iter);
+            break;
         }
     }
 }

@@ -22,7 +22,13 @@ PeerConnection::PeerConnection(EventLoop* el, PortAllocator* allocator)
     _transport_controller->signal_candidate_allocate_done.connect(this, &PeerConnection::on_candidate_allocate_done);
     _transport_controller->signal_connection_state.connect(this, &PeerConnection::_on_connection_state);
 }
-PeerConnection::~PeerConnection() {}
+PeerConnection::~PeerConnection() {
+    if (_destory_timer) {
+        _el->delete_timer(_destory_timer);
+        _destory_timer = nullptr;
+    }
+    RTC_LOG(LS_INFO) << "PeerConnection destroy";
+}
 
 void PeerConnection::on_candidate_allocate_done(TransportController* transport_controller,
                                                 const std::string& transport_name, IceCandidateComponent component,
@@ -49,6 +55,22 @@ int PeerConnection::init(rtc::RTCCertificate* certificate) {
     _certificate = certificate;
     _transport_controller->set_local_certificate(certificate);
     return 0;
+}
+
+void destroy_timer_cb(EventLoop* /*el*/, TimeWatcher* /*w*/, void* data) {
+    PeerConnection* pc = (PeerConnection*)data;
+    delete pc;
+}
+
+void PeerConnection::destroy() {
+    if (_destory_timer) {
+        _el->delete_timer(_destory_timer);
+        _destory_timer = nullptr;
+    }
+    _destory_timer = _el->create_timer(destroy_timer_cb, this, false);  // 只执行一次
+    // 延时执行是为了跳出当前函数执行，使得ice_transport_channel.cpp:_on_check_and_ping()函数可以先不删除_ice_controller继续执行完，
+    // 等_on_check_and_ping执行完之后 再执行destroy_timer_cb，销毁pc，销毁_ice_controller
+    _el->start_timer(_destory_timer, 10000);  // 10ms后执行
 }
 
 std::string PeerConnection::create_offer(const RTCOfferAnswerOptions& options) {

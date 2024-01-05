@@ -27,6 +27,19 @@ IceTransportChannel::~IceTransportChannel() {
         _el->delete_timer(_ping_watcher);
         _ping_watcher = nullptr;
     }
+
+    std::vector<IceConnection*> connections = _ice_controller->connections();
+    for (auto conn : connections) {
+        conn->destroy();
+    }
+
+    for (auto port : _ports) {
+        delete port;
+    }
+    _ports.clear();
+
+    _ice_controller.reset(nullptr);
+    RTC_LOG(LS_INFO) << to_string() << ": IceTransportChannel destroy";
 }
 
 void IceTransportChannel::set_ice_params(const IceParameters& ice_params) {
@@ -65,7 +78,7 @@ void IceTransportChannel::gathering_candidate() {
     for (auto network : network_list) {
         UDPPort* port = new UDPPort(_el, _transport_name, _component, _ice_params);
         port->signal_unknown_address.connect(this, &IceTransportChannel::_on_unknown_address);
-
+        _ports.push_back(port);
         Candidate c;
         int ret = port->create_ice_candidate(network, _allocator->min_port(), _allocator->max_port(), c);
         if (ret != 0) {
@@ -267,10 +280,11 @@ void IceTransportChannel::_maybe_start_pinging() {
 }
 
 void IceTransportChannel::_on_check_and_ping() {
-    _update_connection_states();
+    _update_connection_states();  // 这个方法调用完成之后，会将pc的状态更新为fail，然后释放资源。再向下执行时候，ice_controller已经为空
+    // 可以通过定时器，将某个方法插入到_update_connection_states之后,让当前函数继续执行完，使得_ice_controller不被删除
     // icetransport channel 选了一个conn之后，将 channel ping周期改成480ms
     auto result = _ice_controller->select_connection_to_ping(_last_ping_sent_ms - PING_INTERVAL_DIFF);
-    RTC_LOG(LS_WARNING) << "===========conn: " << result.conn << ", ping interval: " << result.ping_interval;
+    // RTC_LOG(LS_WARNING) << "===========conn: " << result.conn << ", ping interval: " << result.ping_interval;
 
     if (result.conn) {
         IceConnection* conn = (IceConnection*)result.conn;

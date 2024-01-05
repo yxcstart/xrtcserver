@@ -8,7 +8,10 @@
 #include "stream/push_stream.h"
 
 namespace xrtc {
-class RtcStreamManager {
+
+class PushStream;
+
+class RtcStreamManager : public RtcStreamListener {
 public:
     RtcStreamManager(EventLoop* el);
 
@@ -19,6 +22,9 @@ public:
     int set_answer(uint64_t uid, const std::string& stream_name, const std::string& answer,
                    const std::string& stream_type, uint32_t log_id);
     PushStream* find_push_stream(const std::string& stream_name);
+    void remove_push_stream(RtcStream* stream);
+
+    void on_connection_state(RtcStream* stream, PeerConnectionState state) override;
 
 private:
     EventLoop* _el;
