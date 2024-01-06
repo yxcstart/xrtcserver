@@ -185,6 +185,7 @@ void SignalingWorker::_process_rtc_msg() {
         return;
     }
     switch (msg->cmdno) {
+        case CMDNO_PULL:
         case CMDNO_PUSH:
             _response_server_offer(msg);
             break;
@@ -370,6 +371,8 @@ int SignalingWorker::_process_request(TcpConnection* c, const rtc::Slice& header
     switch (cmdno) {
         case CMDNO_PUSH:
             return _process_push(cmdno, c, root, xh->log_id);
+        case CMDNO_PULL:
+            return _process_pull(cmdno, c, root, xh->log_id);
         case CMDNO_STOPPUSH:
             ret = _process_stop_push(cmdno, c, root, xh->log_id);
             break;
@@ -428,6 +431,39 @@ int SignalingWorker::_process_push(int cmdno, TcpConnection* c, const Json::Valu
 
     RTC_LOG(LS_INFO) << "cmdno[" << cmdno << "] uid[" << uid << "] stream_name[" << stream_name << "] auido[" << audio
                      << "] video[" << video << "] signaling server push request log_id[" << log_id << "]";
+
+    std::shared_ptr<RtcMsg> msg = std::make_shared<RtcMsg>();
+    msg->cmdno = cmdno;
+    msg->uid = uid;
+    msg->stream_name = stream_name;
+    msg->audio = audio;
+    msg->video = video;
+    msg->log_id = log_id;
+    msg->worker = this;
+    msg->conn = c;
+    msg->fd = c->fd;
+
+    return g_rtc_server->send_rtc_msg(msg);
+}
+
+int SignalingWorker::_process_pull(int cmdno, TcpConnection* c, const Json::Value& root, uint32_t log_id) {
+    uint64_t uid;
+    std::string stream_name;
+    int audio;
+    int video;
+
+    try {
+        uid = root["uid"].asUInt64();
+        stream_name = root["stream_name"].asString();
+        audio = root["audio"].asInt();
+        video = root["video"].asInt();
+    } catch (Json::Exception& e) {
+        RTC_LOG(LS_WARNING) << "parse json body error: " << e.what() << "log_id: " << log_id;
+        return -1;
+    }
+
+    RTC_LOG(LS_INFO) << "cmdno[" << cmdno << "] uid[" << uid << "] stream_name[" << stream_name << "] auido[" << audio
+                     << "] video[" << video << "] signaling server pull request log_id[" << log_id << "]";
 
     std::shared_ptr<RtcMsg> msg = std::make_shared<RtcMsg>();
     msg->cmdno = cmdno;
