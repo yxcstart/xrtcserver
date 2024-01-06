@@ -115,6 +115,19 @@ int RtcStreamManager::set_answer(uint64_t uid, const std::string& stream_name, c
 
         push_stream->set_remote_sdp(answer);
     } else if ("pull" == stream_type) {
+        PullStream* pull_stream = _find_pull_stream(stream_name);
+        if (!pull_stream) {
+            RTC_LOG(LS_WARNING) << "pull stream not found, uid: " << uid << ", stream_name: " << stream_name
+                                << ", log_id: " << log_id;
+            return -1;
+        }
+
+        if (uid != pull_stream->uid) {
+            RTC_LOG(LS_WARNING) << "uid invalid, uid: " << uid << ", stream_name: " << stream_name
+                                << ", log_id: " << log_id;
+            return -1;
+        }
+        pull_stream->set_remote_sdp(answer);
     }
     return 0;
 }
