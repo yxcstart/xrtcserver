@@ -3,10 +3,10 @@
 project_path="$(pwd)"
 build_path=${project_path}/build
 echo "build path = ${build_path}"
-rm -rf ${build_path}
-if [ $? -ne 0 ]; then ret=$?; echo "failed, ret=$ret, rm path=${build_path}"; exit 1; fi
-mkdir -p ${build_path}
-if [ $? -ne 0 ]; then ret=$?; echo "failed, ret=$ret, mkdir path=${build_path}"; exit 1; fi
+# rm -rf ${build_path}
+# if [ $? -ne 0 ]; then ret=$?; echo "failed, ret=$ret, rm path=${build_path}"; exit 1; fi
+# mkdir -p ${build_path}
+# if [ $? -ne 0 ]; then ret=$?; echo "failed, ret=$ret, mkdir path=${build_path}"; exit 1; fi
 
 
 # cd ${project_path}/third_party/
