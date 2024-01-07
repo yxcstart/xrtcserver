@@ -226,6 +226,39 @@ static int parse_ssrc_info(std::vector<SsrcInfo>& ssrc_info, const std::string& 
     return 0;
 }
 
+static int parse_ssrc_group_info(std::vector<SsrcGroup>& ssrc_groups, const std::string& line) {
+    if (line.find("a=ssrc-group:") == std::string::npos) {
+        return 0;
+    }
+
+    // rfc5576
+    // a=ssrc-group:<semantics> <ssrc-id> ...
+    std::vector<std::string> fields;
+    rtc::split(line.substr(2), ' ', &fields);
+    if (fields.size() < 2) {
+        RTC_LOG(LS_WARNING) << "ssrc-group field size < 2, line: " << line;
+        return -1;
+    }
+
+    std::string semantics = get_atrribute(fields[0]);
+    if (semantics.empty()) {
+        return -1;
+    }
+
+    std::vector<uint32_t> ssrcs;
+    for (size_t i = 1; i < fields.size(); i++) {
+        uint32_t ssrc_id = 0;
+        if (!rtc::FromString(fields[i], &ssrc_id)) {
+            return -1;
+        }
+        ssrcs.push_back(ssrc_id);
+    }
+
+    ssrc_groups.push_back(SsrcGroup(semantics, ssrcs));
+
+    return 0;
+}
+
 int PeerConnection::set_remote_sdp(const std::string& sdp) {
     std::vector<std::string> fields;
     size_t size = rtc::tokenize(sdp, '\n', &fields);
@@ -251,6 +284,7 @@ int PeerConnection::set_remote_sdp(const std::string& sdp) {
 
     std::vector<SsrcInfo> audio_ssrc_info;
     std::vector<SsrcInfo> video_ssrc_info;
+    std::vector<SsrcGroup> video_ssrc_groups;
 
     for (auto field : fields) {
         if (is_rn) {
@@ -296,6 +330,10 @@ int PeerConnection::set_remote_sdp(const std::string& sdp) {
             if (parse_transport_info(video_td.get(), field) != 0) {
                 return -1;
             }
+            if (parse_ssrc_group_info(video_ssrc_groups, field) != 0) {
+                return -1;
+            }
+
             if (parse_ssrc_info(video_ssrc_info, field) != 0) {
                 return -1;
             }

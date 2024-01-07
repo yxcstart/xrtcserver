@@ -6,6 +6,7 @@
 #include <memory>
 #include "base/event_loop.h"
 #include "pc/session_description.h"
+#include "pc/stream_params.h"
 #include "pc/transport_controller.h"
 
 namespace xrtc {
