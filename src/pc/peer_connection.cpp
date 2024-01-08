@@ -259,6 +259,29 @@ static int parse_ssrc_group_info(std::vector<SsrcGroup>& ssrc_groups, const std:
     return 0;
 }
 
+static void create_track_from_ssrc_info(const std::vector<SsrcInfo>& ssrc_infos, std::vector<StreamParams>& tracks) {
+    for (auto ssrc_info : ssrc_infos) {
+        std::string track_id = ssrc_info.track_id;
+
+        auto iter = tracks.begin();
+        for (; iter != tracks.end(); ++iter) {
+            if (iter->id == track_id) {
+                break;
+            }
+        }
+
+        if (iter == tracks.end()) {
+            StreamParams track;
+            track.id = track_id;
+            tracks.push_back(track);
+            iter = tracks.end() - 1;
+        }
+
+        iter->cname = ssrc_info.cname;
+        iter->ssrcs.push_back(ssrc_info.ssrc_id);
+    }
+}
+
 int PeerConnection::set_remote_sdp(const std::string& sdp) {
     std::vector<std::string> fields;
     size_t size = rtc::tokenize(sdp, '\n', &fields);
@@ -285,6 +308,8 @@ int PeerConnection::set_remote_sdp(const std::string& sdp) {
     std::vector<SsrcInfo> audio_ssrc_info;
     std::vector<SsrcInfo> video_ssrc_info;
     std::vector<SsrcGroup> video_ssrc_groups;
+    std::vector<StreamParams> audio_tracks;
+    std::vector<StreamParams> video_tracks;
 
     for (auto field : fields) {
         if (is_rn) {
@@ -336,6 +361,27 @@ int PeerConnection::set_remote_sdp(const std::string& sdp) {
 
             if (parse_ssrc_info(video_ssrc_info, field) != 0) {
                 return -1;
+            }
+        }
+    }
+
+    if (!audio_ssrc_info.empty()) {
+        create_track_from_ssrc_info(audio_ssrc_info, audio_tracks);
+    }
+
+    if (!video_ssrc_info.empty()) {
+        create_track_from_ssrc_info(video_ssrc_info, video_tracks);
+
+        for (auto ssrc_group : video_ssrc_groups) {
+            if (ssrc_group.ssrcs.empty()) {
+                continue;
+            }
+
+            uint32_t ssrc = ssrc_group.ssrcs.front();
+            for (StreamParams& track : video_tracks) {
+                if (track.has_ssrc(ssrc)) {
+                    track.ssrc_groups.push_back(ssrc_group);
+                }
             }
         }
     }
