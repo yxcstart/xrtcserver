@@ -222,6 +222,35 @@ static void build_candidate(std::shared_ptr<MediaContentDescription> content, st
     }
 }
 
+static void add_ssrc_line(uint32_t ssrc, const std::string& attribute, const std::string& value,
+                          std::stringstream& ss) {
+    ss << "a=ssrc:" << ssrc << " " << attribute << ":" << value << "\r\n";
+}
+
+static void build_ssrc(std::shared_ptr<MediaContentDescription> content, std::stringstream& ss) {
+    for (auto track : content->streams()) {
+        for (auto ssrc_group : track.ssrc_groups) {
+            if (ssrc_group.ssrcs.empty()) {
+                continue;
+            }
+
+            ss << "a=ssrc-group:" << ssrc_group.semantics;
+            for (auto ssrc : ssrc_group.ssrcs) {
+                ss << " " << ssrc;
+            }
+            ss << "\r\n";
+        }
+
+        std::string msid = track.stream_id + " " + track.id;
+        for (auto ssrc : track.ssrcs) {
+            add_ssrc_line(ssrc, "cname", track.cname, ss);
+            add_ssrc_line(ssrc, "msid", msid, ss);
+            add_ssrc_line(ssrc, "mslabel", track.stream_id, ss);
+            add_ssrc_line(ssrc, "label", track.id, ss);
+        }
+    }
+}
+
 std::string SessionDescription::to_string() {
     std::stringstream ss;
     ss << "v=0\r\n";
@@ -284,6 +313,7 @@ std::string SessionDescription::to_string() {
         }
 
         build_rtp_map(content, ss);
+        build_ssrc(content, ss);
     }
 
     return ss.str();

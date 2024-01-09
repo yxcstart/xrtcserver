@@ -22,6 +22,7 @@ struct StreamParams {
     std::vector<uint32_t> ssrcs;
     std::vector<SsrcGroup> ssrc_groups;
     std::string cname;
+    std::string stream_id;
 };
 
 }  // namespace xrtc
