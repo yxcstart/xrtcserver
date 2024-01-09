@@ -367,6 +367,10 @@ int PeerConnection::set_remote_sdp(const std::string& sdp) {
 
     if (!audio_ssrc_info.empty()) {
         create_track_from_ssrc_info(audio_ssrc_info, audio_tracks);
+
+        for (auto track : audio_tracks) {
+            audio_content->add_stream(track);
+        }
     }
 
     if (!video_ssrc_info.empty()) {
@@ -383,6 +387,10 @@ int PeerConnection::set_remote_sdp(const std::string& sdp) {
                     track.ssrc_groups.push_back(ssrc_group);
                 }
             }
+        }
+
+        for (auto track : video_tracks) {
+            video_content->add_stream(track);
         }
     }
 

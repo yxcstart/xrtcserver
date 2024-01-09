@@ -30,6 +30,9 @@ public:
     std::string create_offer(const RTCOfferAnswerOptions& options);
     int set_remote_sdp(const std::string& sdp);
 
+    SessionDescription* remote_desc() { return _remote_desc.get(); }
+    SessionDescription* local_desc() { return _local_desc.get(); }
+
     sigslot::signal2<PeerConnection*, PeerConnectionState> signal_connection_state;
 
 private:
