@@ -33,6 +33,9 @@ public:
     SessionDescription* remote_desc() { return _remote_desc.get(); }
     SessionDescription* local_desc() { return _local_desc.get(); }
 
+    void add_audio_source(const std::vector<StreamParams>& source) { _audio_source = source; }
+    void add_video_source(const std::vector<StreamParams>& source) { _video_source = source; }
+
     sigslot::signal2<PeerConnection*, PeerConnectionState> signal_connection_state;
 
 private:
@@ -49,6 +52,8 @@ private:
     rtc::RTCCertificate* _certificate = nullptr;
     std::unique_ptr<TransportController> _transport_controller;
     TimeWatcher* _destory_timer = nullptr;
+    std::vector<StreamParams> _audio_source;
+    std::vector<StreamParams> _video_source;
 };
 
 }  // namespace xrtc

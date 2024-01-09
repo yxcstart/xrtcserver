@@ -19,4 +19,16 @@ std::string PullStream::create_offer() {
     return pc->create_offer(options);
 }
 
+void PullStream::add_audio_source(const std::vector<StreamParams>& source) {
+    if (pc) {
+        pc->add_audio_source(source);
+    }
+}
+
+void PullStream::add_video_source(const std::vector<StreamParams>& source) {
+    if (pc) {
+        pc->add_video_source(source);
+    }
+}
+
 }  // namespace xrtc
