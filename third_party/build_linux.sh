@@ -67,6 +67,15 @@ function build_openssl(){
     make install
 }
 
+build_srtp(){
+    echo "========build srtp========="
+    cd $curr_path/src/libsrtp
+    ./configure --prefix=$curr_path/libsrtp
+    make clean
+    make 
+    make install
+}
+
 function install(){
     cd $curr_path
     cp -r yaml-cpp/include/yaml-cpp include/
@@ -93,10 +102,19 @@ function install(){
         cp jsoncpp/lib/lib*.a lib/
     fi
 
+    cp -r libsrtp/include/* include/
+    if [ -d libsrtp/lib64 ]; then
+        cp libsrtp/lib64/lib*.a lib/
+    fi
+    if [ -d libsrtp/lib ]; then
+        cp libsrtp/lib/lib*.a lib/
+    fi
+
     rm -rf ssl
     rm -rf jsoncpp
     rm -rf ev
     rm -rf yaml-cpp 
+    rm -rf libsrtp
 }
 
 function main(){
@@ -106,6 +124,7 @@ function main(){
     build_rtc
     build_libev
     build_jsoncpp
+    build_srtp
     install
 }
 

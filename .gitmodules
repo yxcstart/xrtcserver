@@ -9,3 +9,6 @@
 [submodule "third_party/src/jsoncpp"]
 	path = third_party/src/jsoncpp
 	url = https://github.com/open-source-parsers/jsoncpp.git
+[submodule "third_party/src/libsrtp"]
+	path = third_party/src/libsrtp
+	url = https://github.com/cisco/libsrtp.git
