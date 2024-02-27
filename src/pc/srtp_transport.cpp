@@ -28,6 +28,7 @@ bool SrtpTransport::set_rtp_params(int send_cs, const uint8_t* send_key, size_t 
 
     RTC_LOG(LS_INFO) << "SRTP " << (new_session ? "activated" : "updated") << " params: send crypto suite " << send_cs
                      << " recv crypto suite " << recv_cs;
+    return true;
 }
 void SrtpTransport::reset_params() {
     _send_session = nullptr;

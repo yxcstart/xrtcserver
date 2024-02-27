@@ -16,11 +16,17 @@ bool SrtpSession::set_send(int cs, const uint8_t* key, size_t key_len, const std
     return _set_key(ssrc_any_outbound, cs, key, key_len, extension_ids);
 }
 
-bool SrtpSession::set_recv(int cs, const uint8_t* key, size_t key_len, const std::vector<int>& extension_ids) {}
+bool SrtpSession::set_recv(int cs, const uint8_t* key, size_t key_len, const std::vector<int>& extension_ids) {
+    return _set_key(ssrc_any_outbound, cs, key, key_len, extension_ids);
+}
 
-bool SrtpSession::update_send(int cs, const uint8_t* key, size_t key_len, const std::vector<int>& extension_ids) {}
+bool SrtpSession::update_send(int cs, const uint8_t* key, size_t key_len, const std::vector<int>& extension_ids) {
+    return _update_key(ssrc_any_outbound, cs, key, key_len, extension_ids);
+}
 
-bool SrtpSession::update_recv(int cs, const uint8_t* key, size_t key_len, const std::vector<int>& extension_ids) {}
+bool SrtpSession::update_recv(int cs, const uint8_t* key, size_t key_len, const std::vector<int>& extension_ids) {
+    return _update_key(ssrc_any_outbound, cs, key, key_len, extension_ids);
+}
 
 void SrtpSession::_event_handle_thunk(srtp_event_data_t* ev) {
     SrtpSession* session = (SrtpSession*)(srtp_get_user_data(ev->session));
@@ -70,6 +76,16 @@ bool SrtpSession::_increment_libsrtp_usage_count_and_maybe_init() {
     return true;
 }
 
+bool SrtpSession::_update_key(int type, int cs, const uint8_t* key, size_t key_len,
+                              const std::vector<int>& extension_ids) {
+    if (!_session) {
+        RTC_LOG(LS_WARNING) << "Failed to update on non-exsiting SRTP session";
+        return false;
+    }
+
+    return _do_set_key(type, cs, key, key_len, extension_ids);
+}
+
 bool SrtpSession::_set_key(int type, int cs, const uint8_t* key, size_t key_len,
                            const std::vector<int>& extension_ids) {
     if (_session) {
@@ -91,10 +107,16 @@ bool SrtpSession::_do_set_key(int type, int cs, const uint8_t* key, size_t key_l
     memset(&policy, 0, sizeof(policy));
 
     bool rtp_ret = srtp_crypto_policy_set_from_profile_for_rtp(&policy.rtp, (srtp_profile_t)cs);
-    bool rctp_ret = srtp_crypto_policy_set_from_profile_for_rtcp(&policy.rtcp, (srtp_profile_t)cs);
+    bool rtcp_ret = srtp_crypto_policy_set_from_profile_for_rtcp(&policy.rtcp, (srtp_profile_t)cs);
+
+    if (rtp_ret != srtp_err_status_ok || rtcp_ret != srtp_err_status_ok) {
+        RTC_LOG(LS_WARNING) << "SRTP session " << (!_session ? "create" : "update")
+                            << " failed: unsupported crypto suite " << cs;
+        return false;
+    }
 
     if (!key || key_len != (size_t)policy.rtp.cipher_key_len) {
-        RTC_LOG(LS_WARNING) << "SRTP session " << (_session ? "create" : "update") << " failed: invalid key";
+        RTC_LOG(LS_WARNING) << "SRTP session " << (!_session ? "create" : "update") << " failed: invalid key";
         return false;
     }
 
@@ -105,7 +127,7 @@ bool SrtpSession::_do_set_key(int type, int cs, const uint8_t* key, size_t key_l
     policy.allow_repeat_tx = 1;
     policy.next = nullptr;
 
-    if (_session) {
+    if (!_session) {
         int err = srtp_create(&_session, &policy);
         if (err != srtp_err_status_ok) {
             RTC_LOG(LS_WARNING) << "Failed to create srtp, err: " << err;
