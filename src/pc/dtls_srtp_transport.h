@@ -24,6 +24,7 @@ private:
     void _maybe_setup_dtls_srtp();
     void _setup_dtls_srtp();
     void _on_dtls_state(DtlsTransport* dtls, DtlsTransportState state);
+    void _on_read_packet(DtlsTransport* dtls, const char* data, size_t len, int64_t ts);
 
 private:
     std::string _transport_name;

@@ -1,5 +1,7 @@
 #include "pc/dtls_srtp_transport.h"
+#include <rtc_base/copy_on_write_buffer.h>
 #include <rtc_base/logging.h>
+#include "module/rtp_rtcp/rtp_utils.h"
 #include "pc/dtls_transport.h"
 
 namespace xrtc {
@@ -25,6 +27,21 @@ void DtlsSrtpTransport::_on_dtls_state(DtlsTransport* /*dtls*/, DtlsTransportSta
     }
 
     _maybe_setup_dtls_srtp();
+}
+
+void DtlsSrtpTransport::_on_read_packet(DtlsTransport* dtls, const char* data, size_t len, int64_t ts) {
+    auto array_view = rtc::MakeArrayView(data, len);
+    RtpPacketType packet_type = infer_rtp_packet_type(array_view);
+    if (packet_type == RtpPacketType::k_unknown) {
+        return;
+    }
+
+    rtc::CopyOnWriteBuffer packet(data, len);
+    if (packet_type == RtpPacketType::k_rtcp) {
+        //_on_rtcp_packet_received(std::move(packet), ts);
+    } else {
+        //_on_rtp_packet_received(std::move(packet), ts);
+    }
 }
 
 bool DtlsSrtpTransport::is_dtls_writable() {
