@@ -106,8 +106,8 @@ bool SrtpSession::_do_set_key(int type, int cs, const uint8_t* key, size_t key_l
     srtp_policy_t policy;
     memset(&policy, 0, sizeof(policy));
 
-    bool rtp_ret = srtp_crypto_policy_set_from_profile_for_rtp(&policy.rtp, (srtp_profile_t)cs);
-    bool rtcp_ret = srtp_crypto_policy_set_from_profile_for_rtcp(&policy.rtcp, (srtp_profile_t)cs);
+    bool rtp_ret = srtp_crypto_policy_set_from_profile_for_rtp(&policy.rtp, static_cast<srtp_profile_t>(cs));
+    bool rtcp_ret = srtp_crypto_policy_set_from_profile_for_rtcp(&policy.rtcp, static_cast<srtp_profile_t>(cs));
 
     if (rtp_ret != srtp_err_status_ok || rtcp_ret != srtp_err_status_ok) {
         RTC_LOG(LS_WARNING) << "SRTP session " << (!_session ? "create" : "update")
