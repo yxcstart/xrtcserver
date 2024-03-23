@@ -17,6 +17,7 @@ void DtlsSrtpTransport::set_dtls_transports(DtlsTransport* rtp_dtls_transport, D
     _rtcp_dtls_transport = rtcp_dtls_transport;
     if (_rtp_dtls_transport) {
         _rtp_dtls_transport->signal_dtls_state.connect(this, &DtlsSrtpTransport::_on_dtls_state);
+        _rtp_dtls_transport->signal_read_packet.connect(this, &DtlsSrtpTransport::_on_read_packet);
     }
 }
 
@@ -39,8 +40,10 @@ void DtlsSrtpTransport::_on_read_packet(DtlsTransport* dtls, const char* data, s
     rtc::CopyOnWriteBuffer packet(data, len);
     if (packet_type == RtpPacketType::k_rtcp) {
         //_on_rtcp_packet_received(std::move(packet), ts);
+        RTC_LOG(LS_WARNING) << "============rtcp packet received: " << len;
     } else {
         //_on_rtp_packet_received(std::move(packet), ts);
+        RTC_LOG(LS_WARNING) << "============rtp packet received: " << len;
     }
 }
 
