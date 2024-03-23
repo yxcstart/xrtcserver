@@ -147,4 +147,26 @@ bool SrtpSession::_do_set_key(int type, int cs, const uint8_t* key, size_t key_l
     return true;
 }
 
+bool SrtpSession::unprotect_rtp(void* p, int in_len, int* out_len) {
+    if (!_session) {
+        RTC_LOG(LS_WARNING) << "Failed to unprotect rtp packet: no SRTP session";
+        return false;
+    }
+
+    *out_len = in_len;
+    int err = srtp_unprotect(_session, static_cast<uint8_t*>(p), (size_t*)out_len);
+    return err == srtp_err_status_ok;
+}
+
+bool SrtpSession::unprotect_rtcp(void* p, int in_len, int* out_len) {
+    if (!_session) {
+        RTC_LOG(LS_WARNING) << "Failed to unprotect rtcp packet: no SRTP session";
+        return false;
+    }
+
+    *out_len = in_len;
+    int err = srtp_unprotect_rtcp(_session, static_cast<uint8_t*>(p), (size_t*)out_len);
+    return err == srtp_err_status_ok;
+}
+
 }  // namespace xrtc

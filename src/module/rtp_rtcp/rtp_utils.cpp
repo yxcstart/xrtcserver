@@ -1,6 +1,6 @@
 
 #include "module/rtp_rtcp/rtp_utils.h"
-
+#include <rtc_base/byte_io.h>
 namespace xrtc {
 
 const uint8_t k_rtp_version = 2;
@@ -31,6 +31,24 @@ RtpPacketType infer_rtp_packet_type(rtc::ArrayView<const char> packet) {
     }
 
     return RtpPacketType::k_unknown;
+}
+
+uint16_t parse_rtp_sequence_number(rtc::ArrayView<const uint8_t> packet) {
+    return rtc::ByteReader<uint16_t>::ReadBigEndian(packet.data() + 2);
+}
+uint32_t parse_rtp_ssrc(rtc::ArrayView<const uint8_t> packet) {
+    return rtc::ByteReader<uint32_t>::ReadBigEndian(packet.data() + 8);
+}
+
+bool get_rtcp_type(const void* data, size_t len, int* type) {
+    if (len < k_min_rtcp_packet) {
+        return false;
+    }
+    if (!data || !type) {
+        return false;
+    }
+    *type = *(static_cast<const uint8_t*>(data) + 1);
+    return true;
 }
 
 }  // namespace xrtc

@@ -4,7 +4,7 @@ namespace xrtc {
 
 SrtpTransport::SrtpTransport(bool rtcp_mux_enabled) : _rtcp_mux_enabled(rtcp_mux_enabled) {}
 
-bool SrtpTransport::is_dtls_active() { return _send_session && _recv_session; }
+bool SrtpTransport::is_srtp_active() { return _send_session && _recv_session; }
 
 bool SrtpTransport::set_rtp_params(int send_cs, const uint8_t* send_key, size_t send_key_len,
                                    const std::vector<int>& send_extension_ids, int recv_cs, const uint8_t* recv_key,
@@ -41,6 +41,22 @@ void SrtpTransport::reset_params() {
 void SrtpTransport::_create_srtp_session() {
     _send_session.reset(new SrtpSession());
     _recv_session.reset(new SrtpSession());
+}
+
+bool SrtpTransport::unprotect_rtp(void* p, int in_len, int* out_len) {
+    if (!is_srtp_active()) {
+        return false;
+    }
+
+    return _recv_session->unprotect_rtp(p, in_len, out_len);
+}
+
+bool SrtpTransport::unprotect_rtcp(void* p, int in_len, int* out_len) {
+    if (!is_srtp_active()) {
+        return false;
+    }
+
+    return _recv_session->unprotect_rtp(p, in_len, out_len);
 }
 
 }  // namespace xrtc
