@@ -55,11 +55,21 @@ int TransportController::set_local_description(SessionDescription* desc) {
         DtlsSrtpTransport* dtls_srtp = new DtlsSrtpTransport(dtls->transport_name(), true);
 
         dtls_srtp->set_dtls_transports(dtls, nullptr);
+
+        dtls_srtp->signal_rtp_packet_received.connect(this, &TransportController::_on_rtp_packet_received);
+        dtls_srtp->signal_rtcp_packet_received.connect(this, &TransportController::_on_rtcp_packet_received);
     }
 
     _ice_agent->gathering_candidate();
 
     return 0;
+}
+
+void TransportController::_on_rtp_packet_received(DtlsSrtpTransport*, rtc::CopyOnWriteBuffer* packet, int64_t ts) {
+    signal_rtp_packet_received(this, packet, ts);
+}
+void TransportController::_on_rtcp_packet_received(DtlsSrtpTransport*, rtc::CopyOnWriteBuffer* packet, int64_t ts) {
+    signal_rtcp_packet_received(this, packet, ts);
 }
 
 void TransportController::_on_dtls_receiving_state(DtlsTransport*) { _update_state(); }

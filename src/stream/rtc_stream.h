@@ -19,6 +19,8 @@ enum class RtcStreamType {
 class RtcStreamListener {
 public:
     virtual void on_connection_state(RtcStream* stream, PeerConnectionState state) = 0;
+    virtual void on_rtp_packet_received(RtcStream* stream, const char* data, size_t len) = 0;
+    virtual void on_rtcp_packet_received(RtcStream* stream, const char* data, size_t len) = 0;
 };
 
 class RtcStream : public sigslot::has_slots<> {
@@ -42,6 +44,8 @@ public:
 
 private:
     void _on_connection_state(PeerConnection*, PeerConnectionState);
+    void _on_rtp_packet_received(PeerConnection*, rtc::CopyOnWriteBuffer* packet, int64_t /*ts*/);
+    void _on_rtcp_packet_received(PeerConnection*, rtc::CopyOnWriteBuffer* packet, int64_t /*ts*/);
 
 protected:
     EventLoop* el;

@@ -27,6 +27,8 @@ public:
     int stop_push(uint64_t uid, const std::string& stream_name);
 
     void on_connection_state(RtcStream* stream, PeerConnectionState state) override;
+    void on_rtp_packet_received(RtcStream* stream, const char* data, size_t len) override;
+    void on_rtcp_packet_received(RtcStream* stream, const char* data, size_t len) override;
 
 private:
     PushStream* _find_push_stream(const std::string& stream_name);
