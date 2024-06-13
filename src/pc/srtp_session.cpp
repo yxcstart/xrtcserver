@@ -21,11 +21,11 @@ bool SrtpSession::set_recv(int cs, const uint8_t* key, size_t key_len, const std
 }
 
 bool SrtpSession::update_send(int cs, const uint8_t* key, size_t key_len, const std::vector<int>& extension_ids) {
-    return _update_key(ssrc_any_outbound, cs, key, key_len, extension_ids);
+    return _update_key(ssrc_any_inbound, cs, key, key_len, extension_ids);
 }
 
 bool SrtpSession::update_recv(int cs, const uint8_t* key, size_t key_len, const std::vector<int>& extension_ids) {
-    return _update_key(ssrc_any_outbound, cs, key, key_len, extension_ids);
+    return _update_key(ssrc_any_inbound, cs, key, key_len, extension_ids);
 }
 
 void SrtpSession::_event_handle_thunk(srtp_event_data_t* ev) {
@@ -89,8 +89,7 @@ bool SrtpSession::_update_key(int type, int cs, const uint8_t* key, size_t key_l
 bool SrtpSession::_set_key(int type, int cs, const uint8_t* key, size_t key_len,
                            const std::vector<int>& extension_ids) {
     if (_session) {
-        RTC_LOG(LS_WARNING) << "Failed to create session: "
-                            << "SRTP session already created";
+        RTC_LOG(LS_WARNING) << "Failed to create session: " << "SRTP session already created";
         return false;
     }
     if (_increment_libsrtp_usage_count_and_maybe_init()) {
@@ -154,7 +153,7 @@ bool SrtpSession::unprotect_rtp(void* p, int in_len, int* out_len) {
     }
 
     *out_len = in_len;
-    int err = srtp_unprotect(_session, static_cast<uint8_t*>(p), (size_t*)out_len);
+    int err = srtp_unprotect(_session, p, out_len);
     return err == srtp_err_status_ok;
 }
 
@@ -165,7 +164,7 @@ bool SrtpSession::unprotect_rtcp(void* p, int in_len, int* out_len) {
     }
 
     *out_len = in_len;
-    int err = srtp_unprotect_rtcp(_session, static_cast<uint8_t*>(p), (size_t*)out_len);
+    int err = srtp_unprotect_rtcp(_session, p, out_len);
     return err == srtp_err_status_ok;
 }
 

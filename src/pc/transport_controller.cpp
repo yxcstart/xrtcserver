@@ -58,6 +58,8 @@ int TransportController::set_local_description(SessionDescription* desc) {
 
         dtls_srtp->signal_rtp_packet_received.connect(this, &TransportController::_on_rtp_packet_received);
         dtls_srtp->signal_rtcp_packet_received.connect(this, &TransportController::_on_rtcp_packet_received);
+
+        _add_dtls_srtp_transport(dtls_srtp);
     }
 
     _ice_agent->gathering_candidate();
@@ -137,6 +139,23 @@ DtlsTransport* TransportController::_get_dtls_transport(const std::string& trans
     return nullptr;
 }
 
+void TransportController::_add_dtls_srtp_transport(DtlsSrtpTransport* dtls_srtp) {
+    auto iter = _dtls_srtp_transport_by_name.find(dtls_srtp->transport_name());
+    if (iter != _dtls_srtp_transport_by_name.end()) {
+        delete iter->second;
+    }
+
+    _dtls_srtp_transport_by_name[dtls_srtp->transport_name()] = dtls_srtp;
+}
+
+DtlsSrtpTransport* TransportController::_get_dtls_srtp_transport(const std::string& transport_name) {
+    auto iter = _dtls_srtp_transport_by_name.find(transport_name);
+    if (iter != _dtls_srtp_transport_by_name.end()) {
+        return iter->second;
+    }
+    return nullptr;
+}
+
 int TransportController::set_remote_description(SessionDescription* desc) {
     if (!desc) {
         return -1;
@@ -161,6 +180,14 @@ int TransportController::set_remote_description(SessionDescription* desc) {
     }
 
     return 0;
+}
+
+int TransportController::send_rtp(const std::string& transport_name, const char* data, size_t len) {
+    auto dtls_srtp = _get_dtls_srtp_transport(transport_name);
+    if (dtls_srtp) {
+        dtls_srtp->send_rtp(data, len);
+    }
+    return -1;
 }
 
 }  // namespace xrtc

@@ -56,8 +56,7 @@ void DtlsSrtpTransport::_on_rtcp_packet_received(rtc::CopyOnWriteBuffer packet, 
     if (!unprotect_rtcp(data, len, &len)) {
         int type = 0;
         get_rtcp_type(data, len, &type);
-        RTC_LOG(LS_WARNING) << "Failed to unprotect rtcp packet: "
-                            << ", size=" << len << ", type=" << type;
+        RTC_LOG(LS_WARNING) << "Failed to unprotect rtcp packet: " << ", size=" << len << ", type=" << type;
         return;
     }
 
@@ -76,8 +75,8 @@ void DtlsSrtpTransport::_on_rtp_packet_received(rtc::CopyOnWriteBuffer packet, i
     if (!unprotect_rtp(data, len, &len)) {
         const int k_fail_log = 100;
         if (_unprotect_fail_count % k_fail_log == 0) {
-            RTC_LOG(LS_WARNING) << "Failed to unprotect rtp packet: "
-                                << ", size=" << len << ", seqnum=" << parse_rtp_sequence_number(packet)
+            RTC_LOG(LS_WARNING) << "Failed to unprotect rtp packet: " << ", size=" << len
+                                << ", seqnum=" << parse_rtp_sequence_number(packet)
                                 << ", ssrc=" << parse_rtp_ssrc(packet)
                                 << ", unprotect_fail_count=" << _unprotect_fail_count;
         }
@@ -158,4 +157,7 @@ bool DtlsSrtpTransport::_extract_params(DtlsTransport* dtls_transport, int* sele
 
     return true;
 }
+
+int DtlsSrtpTransport::send_rtp(const char* data, size_t len) { return -1; }
+
 }  // namespace xrtc

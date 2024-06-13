@@ -45,6 +45,13 @@ int RtcStream::start(rtc::RTCCertificate* certificate) { return pc->init(certifi
 
 int RtcStream::set_remote_sdp(const std::string& sdp) { return pc->set_remote_sdp(sdp); }
 
+int RtcStream::send_rtp(const char* data, size_t len) {
+    if (pc) {
+        pc->send_rtp(data, len);
+    }
+    return -1;
+}
+
 std::string RtcStream::to_string() {
     std::stringstream ss;
     ss << "Stream[" << this << "|" << uid << "|" << stream_name << "]";
