@@ -101,15 +101,13 @@ void DtlsTransport::_on_read_packet(IceTransportChannel* /*channel*/, const char
                                     << "we are doing DTLS or not";
             }
             if (is_dtls_client_hello_packet(buf, len)) {
-                RTC_LOG(LS_INFO) << to_string() << ": Caching DTLS ClientHello packet until "
-                                 << "DTLS started";
+                RTC_LOG(LS_INFO) << to_string() << ": Caching DTLS ClientHello packet until " << "DTLS started";
                 _cached_client_hello.SetData(buf, len);
                 if (!_dtls && _local_certificate) {
                     _setup_dtls();
                 }
             } else {
-                RTC_LOG(LS_WARNING) << to_string() << ": Not a DTLS ClientHello packet, "
-                                    << "dropping";
+                RTC_LOG(LS_WARNING) << to_string() << ": Not a DTLS ClientHello packet, " << "dropping";
             }
 
             break;
@@ -122,14 +120,12 @@ void DtlsTransport::_on_read_packet(IceTransportChannel* /*channel*/, const char
                 }
             } else {  // RTP/RTCP包
                 if (_dtls_state != DtlsTransportState::k_connected) {
-                    RTC_LOG(LS_WARNING) << to_string() << ": Received non DTLS packet "
-                                        << "before DTLS complete";
+                    RTC_LOG(LS_WARNING) << to_string() << ": Received non DTLS packet " << "before DTLS complete";
                     return;
                 }
 
                 if (!is_rtp_packet(buf, len)) {
-                    RTC_LOG(LS_WARNING) << to_string() << ": Received unexpected non "
-                                        << "DTLS packet";
+                    RTC_LOG(LS_WARNING) << to_string() << ": Received unexpected non " << "DTLS packet";
                     return;
                 }
                 // RTC_LOG(LS_INFO) << "==============rtp received: " << len;
@@ -341,8 +337,7 @@ void DtlsTransport::_on_dtls_event(rtc::StreamInterface* /*dtls*/, int sig, int 
             _set_writable_state(false);
             _set_dtls_state(DtlsTransportState::k_closed);
         } else {
-            RTC_LOG(LS_INFO) << to_string() << ": DTLS transport closed with error, "
-                             << "code=" << error;
+            RTC_LOG(LS_INFO) << to_string() << ": DTLS transport closed with error, " << "code=" << error;
             _set_writable_state(false);
             _set_dtls_state(DtlsTransportState::k_failed);
         }
@@ -415,6 +410,14 @@ bool DtlsTransport::export_keying_material(const std::string& label, const uint8
                                            bool use_context, uint8_t* result, size_t result_len) {
     return _dtls.get() ? _dtls->ExportKeyingMaterial(label, context, context_len, use_context, result, result_len)
                        : false;
+}
+
+int DtlsTransport::send_packet(const char* data, size_t len) {
+    if (_ice_channel) {
+        return _ice_channel->send_packet(data, len);
+    }
+
+    return -1;
 }
 
 }  // namespace xrtc

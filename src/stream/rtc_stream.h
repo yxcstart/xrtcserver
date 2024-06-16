@@ -21,6 +21,7 @@ public:
     virtual void on_connection_state(RtcStream* stream, PeerConnectionState state) = 0;
     virtual void on_rtp_packet_received(RtcStream* stream, const char* data, size_t len) = 0;
     virtual void on_rtcp_packet_received(RtcStream* stream, const char* data, size_t len) = 0;
+    virtual void on_stream_exception(RtcStream* stream) = 0;
 };
 
 class RtcStream : public sigslot::has_slots<> {
@@ -41,6 +42,7 @@ public:
     const std::string& get_stream_name() { return stream_name; }
 
     int send_rtp(const char* data, size_t len);
+    int send_rtcp(const char* data, size_t len);
 
     std::string to_string();
 
@@ -58,10 +60,13 @@ protected:
     uint32_t log_id;
 
     PeerConnection* pc;
+
+private:
     PeerConnectionState _state = PeerConnectionState::k_new;
     RtcStreamListener* _listener = nullptr;
-
+    TimeWatcher* _ice_timeout_watcher = nullptr;
     friend class RtcStreamManager;
+    friend void ice_timeout_cb(EventLoop* el, TimeWatcher* w, void* data);
 };
 
 }  // namespace xrtc

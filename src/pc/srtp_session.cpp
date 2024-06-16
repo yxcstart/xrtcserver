@@ -10,7 +10,16 @@ ABSL_CONST_INIT webrtc::GlobalMutex g_libsrtp_lock(absl::kConstInit);
 
 SrtpSession::SrtpSession() {}
 
-SrtpSession::~SrtpSession() {}
+SrtpSession::~SrtpSession() {
+    if (_session) {
+        srtp_set_user_data(_session, nullptr);
+        srtp_dealloc(_session);
+    }
+
+    if (_inited) {
+        _decrement_libsrtp_usage_and_maybe_deinit();
+    }
+}
 
 bool SrtpSession::set_send(int cs, const uint8_t* key, size_t key_len, const std::vector<int>& extension_ids) {
     return _set_key(ssrc_any_outbound, cs, key, key_len, extension_ids);
@@ -74,6 +83,17 @@ bool SrtpSession::_increment_libsrtp_usage_count_and_maybe_init() {
 
     g_libsrtp_usage_count++;
     return true;
+}
+
+void SrtpSession::_decrement_libsrtp_usage_and_maybe_deinit() {
+    webrtc::GlobalMutexLock ls(&g_libsrtp_lock);
+
+    if (--g_libsrtp_usage_count == 0) {
+        int err = srtp_shutdown();
+        if (err) {
+            RTC_LOG(LS_WARNING) << "Failed to shutdown srtp, err: " << err;
+        }
+    }
 }
 
 bool SrtpSession::_update_key(int type, int cs, const uint8_t* key, size_t key_len,
@@ -146,6 +166,21 @@ bool SrtpSession::_do_set_key(int type, int cs, const uint8_t* key, size_t key_l
     return true;
 }
 
+void SrtpSession::get_auth_tag_len(int* rtp_auth_tag_len, int* rtcp_auth_tag_len) {
+    if (!_session) {
+        RTC_LOG(LS_WARNING) << "Failed to get auth tag len: no SRTP session";
+        return;
+    }
+
+    if (rtp_auth_tag_len) {
+        *rtp_auth_tag_len = _rtp_auth_tag_len;
+    }
+
+    if (rtcp_auth_tag_len) {
+        *rtcp_auth_tag_len = _rtcp_auth_tag_len;
+    }
+}
+
 bool SrtpSession::unprotect_rtp(void* p, int in_len, int* out_len) {
     if (!_session) {
         RTC_LOG(LS_WARNING) << "Failed to unprotect rtp packet: no SRTP session";
@@ -168,4 +203,48 @@ bool SrtpSession::unprotect_rtcp(void* p, int in_len, int* out_len) {
     return err == srtp_err_status_ok;
 }
 
+bool SrtpSession::protect_rtp(void* p, int in_len, int max_len, int* out_len) {
+    if (!_session) {
+        RTC_LOG(LS_WARNING) << "Failed to protect rtp packet: no SRTP session";
+        return false;
+    }
+
+    int need_len = in_len + _rtp_auth_tag_len;
+    if (max_len < need_len) {
+        RTC_LOG(LS_WARNING) << "Failed to protect rtp packet: The buffer length " << max_len << " is less than needed "
+                            << need_len;
+        return false;
+    }
+
+    *out_len = in_len;
+    int err = srtp_protect(_session, p, out_len);
+    if (err != srtp_err_status_ok) {
+        RTC_LOG(LS_WARNING) << "Failed to protect rtp packet: err=" << err;
+        return false;
+    }
+
+    return true;
+}
+
+bool SrtpSession::protect_rtcp(void* p, int in_len, int max_len, int* out_len) {
+    if (!_session) {
+        RTC_LOG(LS_WARNING) << "Failed to protect rtcp packet: no SRTP session";
+        return false;
+    }
+
+    int need_len = in_len + _rtcp_auth_tag_len + sizeof(uint32_t);
+    if (max_len < need_len) {
+        RTC_LOG(LS_WARNING) << "Failed to protect rtcp packet: The buffer length " << max_len << " is less than needed "
+                            << need_len;
+        return false;
+    }
+
+    *out_len = in_len;
+    int err = srtp_protect_rtcp(_session, p, out_len);
+    if (err != srtp_err_status_ok) {
+        RTC_LOG(LS_WARNING) << "Failed to protect rtcp packet: err=" << err;
+        return false;
+    }
+    return true;
+}
 }  // namespace xrtc

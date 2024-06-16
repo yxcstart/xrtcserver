@@ -38,6 +38,7 @@ private:
     void _process_push(std::shared_ptr<RtcMsg> msg);
     void _process_pull(std::shared_ptr<RtcMsg> msg);
     void _process_stop_push(std::shared_ptr<RtcMsg> msg);
+    void _process_stop_pull(std::shared_ptr<RtcMsg> msg);
     void _process_answer(std::shared_ptr<RtcMsg> msg);
 
 private:

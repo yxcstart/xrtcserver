@@ -425,7 +425,15 @@ int PeerConnection::set_remote_sdp(const std::string& sdp) {
 int PeerConnection::send_rtp(const char* data, size_t len) {
     if (_transport_controller) {
         // todo: 需要根据实际情况完善
-        _transport_controller->send_rtp("audio", data, len);
+        return _transport_controller->send_rtp("audio", data, len);
+    }
+
+    return -1;
+}
+int PeerConnection::send_rtcp(const char* data, size_t len) {
+    if (_transport_controller) {
+        // todo: 需要根据实际情况完善
+        return _transport_controller->send_rtcp("audio", data, len);
     }
 
     return -1;
